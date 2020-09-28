@@ -7,15 +7,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
-  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" href="/img/og_image.png">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
   <meta name="description" content="">
-  <meta name="author" content="John Doe">
+  <meta name="author" content="noarsark">
   <meta name="keywords" content="">
   <title>Hexo</title>
 
@@ -47,7 +47,7 @@
     <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand"
-       href="/">&nbsp;<strong>Fluid</strong>&nbsp;</a>
+       href="/">&nbsp;<strong>noarsark's space</strong>&nbsp;</a>
 
     <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
             data-target="#navbarSupportedContent"
@@ -137,7 +137,7 @@
 </nav>
 
     <div class="banner intro-2" id="background" parallax=true
-         style="background: url('/gallery/about.jpg') no-repeat center center;
+         style="background: url('/gallery/berkeley.jpg') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
@@ -170,6 +170,62 @@
               <div class="col-12 col-md-10 m-auto">
                 
 
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2020/09/28/%E8%81%8A%E4%B8%80%E8%81%8AHashMap/" target="_self">
+          <img src="/gallery/hashmap.png" srcset="/img/loading.gif" alt="聊一聊HashMap的源码">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h1 class="index-header">
+        <a href="/2020/09/28/%E8%81%8A%E4%B8%80%E8%81%8AHashMap/">聊一聊HashMap的源码</a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2020/09/28/%E8%81%8A%E4%B8%80%E8%81%8AHashMap/">
+          
+          
+            
+          
+          HashMap作为Java容器里比较重要的一员，实现的源码一直很值得我们研究，下面就结合源码来聊一聊吧。为了便于理解，以下源码分析以 JDK 1.7 为主。
+1. 存储结构内部包含了一个 Entry 类型的数组 table。Entry 存储着键值对。它包含了四个字段，从 next 字段我们可以看出 Entry 是一个链表。即数组中的每个位置被当成一个桶，一个桶存放一个链表。HashMap 使用拉链
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2020-09-28 21:28" pubdate>
+              2020-09-28
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/Java/">Java</a>
+            
+              <a href="/tags/Java%E5%AE%B9%E5%99%A8/">Java容器</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
 
   <div class="row mx-auto index-card">
     
@@ -330,7 +386,13 @@
   <div class="row mx-auto index-card">
     
     
-    <article class="col-12 col-md-12 mx-auto index-info">
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2019/08/14/hexo/" target="_self">
+          <img src="/gallery/github_hexo.jpg" srcset="/img/loading.gif" alt="搭建个人博客--从0到1">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
       <h1 class="index-header">
         <a href="/2019/08/14/hexo/">搭建个人博客--从0到1</a>
       </h1>
@@ -358,7 +420,7 @@
           <div class="post-meta mr-3">
             <i class="iconfont icon-category"></i>
             
-              <a href="/categories/web%E5%89%8D%E7%AB%AF/">web前端</a>
+              <a href="/categories/blog/">blog</a>
             
           </div>
         
@@ -367,8 +429,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/hexo/">hexo</a>
-            
-              <a href="/tags/icarus/">icarus</a>
             
           </div>
         
@@ -470,7 +530,7 @@
     var typed = new Typed('#subtitle', {
       strings: [
         '  ',
-        "An elegant Material-Design theme for Hexo&nbsp;",
+        "Life Oriented Programming &nbsp;",
       ],
       cursorChar: "_",
       typeSpeed: 70,

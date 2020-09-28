@@ -1,0 +1,817 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" href="/img/og_image.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="">
+  <meta name="author" content="noarsark">
+  <meta name="keywords" content="">
+  <title>聊一聊HashMap的源码 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/monokai-sublime.min.css" />
+    
+  
+
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_pf9vaxs7x7b.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.2.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>noarsark's space</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" href="javascript:">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner intro-2" id="background" parallax=true
+         style="background: url('/img/dojm2h.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="container page-header text-center fade-in-up">
+            <span class="h2" id="subtitle">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2020-09-28 21:28" pubdate>
+        2020年9月28日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2.4k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      34
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-md">
+      <div class="container nopadding-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto" id="post">
+            <!-- SEO header -->
+            <h1 style="display: none">聊一聊HashMap的源码</h1>
+            
+            <div class="markdown-body" id="post-body">
+              <p>HashMap作为Java容器里比较重要的一员，实现的源码一直很值得我们研究，下面就结合源码来聊一聊吧。为了便于理解，以下源码分析以 JDK 1.7 为主。</p>
+<h3 id="1-存储结构"><a href="#1-存储结构" class="headerlink" title="1. 存储结构"></a>1. 存储结构</h3><p>内部包含了一个 Entry 类型的数组 table。Entry 存储着键值对。它包含了四个字段，从 next 字段我们可以看出 Entry 是一个链表。即数组中的每个位置被当成一个桶，一个桶存放一个链表。HashMap 使用拉链法来解决冲突，同一个链表中存放哈希值和散列桶取模运算结果相同的 Entry。</p>
+<p><a target="_blank" rel="noopener" href="https://camo.githubusercontent.com/5d81dca069e6bd97466ee40c53ea963696cfc1ef/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f696d6167652d32303139313230383233343934383230352e706e67"><img src="https://camo.githubusercontent.com/5d81dca069e6bd97466ee40c53ea963696cfc1ef/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f696d6167652d32303139313230383233343934383230352e706e67" srcset="/img/loading.gif" alt="img"></a></p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">transient</span> Entry[] table;
+<span class="hljs-keyword">static</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Entry</span>&lt;<span class="hljs-title">K</span>,<span class="hljs-title">V</span>&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title">Map</span>.<span class="hljs-title">Entry</span>&lt;<span class="hljs-title">K</span>,<span class="hljs-title">V</span>&gt; </span>&#123;
+    <span class="hljs-keyword">final</span> K key;
+    V value;
+    Entry&lt;K,V&gt; next;
+    <span class="hljs-keyword">int</span> hash;
+
+    Entry(<span class="hljs-keyword">int</span> h, K k, V v, Entry&lt;K,V&gt; n) &#123;
+        value = v;
+        next = n;
+        key = k;
+        hash = h;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> K <span class="hljs-title">getKey</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> key;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> V <span class="hljs-title">getValue</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> value;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> V <span class="hljs-title">setValue</span><span class="hljs-params">(V newValue)</span> </span>&#123;
+        V oldValue = value;
+        value = newValue;
+        <span class="hljs-keyword">return</span> oldValue;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">equals</span><span class="hljs-params">(Object o)</span> </span>&#123;
+        <span class="hljs-keyword">if</span> (!(o <span class="hljs-keyword">instanceof</span> Map.Entry))
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+        Map.Entry e = (Map.Entry)o;
+        Object k1 = getKey();
+        Object k2 = e.getKey();
+        <span class="hljs-keyword">if</span> (k1 == k2 || (k1 != <span class="hljs-keyword">null</span> &amp;&amp; k1.equals(k2))) &#123;
+            Object v1 = getValue();
+            Object v2 = e.getValue();
+            <span class="hljs-keyword">if</span> (v1 == v2 || (v1 != <span class="hljs-keyword">null</span> &amp;&amp; v1.equals(v2)))
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+        &#125;
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hashCode</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> Objects.hashCode(getKey()) ^ Objects.hashCode(getValue());
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> String <span class="hljs-title">toString</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> getKey() + <span class="hljs-string">&quot;=&quot;</span> + getValue();
+    &#125;
+&#125;</code></pre></div>
+
+<h3 id="2-拉链法的工作原理"><a href="#2-拉链法的工作原理" class="headerlink" title="2. 拉链法的工作原理"></a>2. 拉链法的工作原理</h3><div class="hljs"><pre><code class="hljs java">HashMap&lt;String, String&gt; map = <span class="hljs-keyword">new</span> HashMap&lt;&gt;();
+map.put(<span class="hljs-string">&quot;K1&quot;</span>, <span class="hljs-string">&quot;V1&quot;</span>);
+map.put(<span class="hljs-string">&quot;K2&quot;</span>, <span class="hljs-string">&quot;V2&quot;</span>);
+map.put(<span class="hljs-string">&quot;K3&quot;</span>, <span class="hljs-string">&quot;V3&quot;</span>);</code></pre></div>
+
+<ul>
+<li>新建一个 HashMap，默认大小为 16；</li>
+<li>插入 &lt;K1,V1&gt; 键值对，先计算 K1 的 hashCode 为 115，使用除留余数法得到所在的桶下标 115%16=3。</li>
+<li>插入 &lt;K2,V2&gt; 键值对，先计算 K2 的 hashCode 为 118，使用除留余数法得到所在的桶下标 118%16=6。</li>
+<li>插入 &lt;K3,V3&gt; 键值对，先计算 K3 的 hashCode 为 118，使用除留余数法得到所在的桶下标 118%16=6，插在 &lt;K2,V2&gt; 前面。</li>
+</ul>
+<p>应该注意到链表的插入是以头插法方式进行的，例如上面的 &lt;K3,V3&gt; 不是插在 &lt;K2,V2&gt; 后面，而是插入在链表头部。</p>
+<p>查找需要分成两步进行：</p>
+<ul>
+<li>计算键值对所在的桶；</li>
+<li>在链表上顺序查找，时间复杂度显然和链表的长度成正比。</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://camo.githubusercontent.com/a7761ef5ade932ba3513693653ee65bedfa0f5db/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f696d6167652d32303139313230383233353235383634332e706e67"><img src="https://camo.githubusercontent.com/a7761ef5ade932ba3513693653ee65bedfa0f5db/68747470733a2f2f63732d6e6f7465732d313235363130393739362e636f732e61702d6775616e677a686f752e6d7971636c6f75642e636f6d2f696d6167652d32303139313230383233353235383634332e706e67" srcset="/img/loading.gif" alt="img"></a></p>
+<h3 id="3-put-操作"><a href="#3-put-操作" class="headerlink" title="3. put 操作"></a>3. put 操作</h3><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> V <span class="hljs-title">put</span><span class="hljs-params">(K key, V value)</span> </span>&#123;
+    <span class="hljs-keyword">if</span> (table == EMPTY_TABLE) &#123;
+        inflateTable(threshold);
+    &#125;
+    <span class="hljs-comment">// 键为 null 单独处理</span>
+    <span class="hljs-keyword">if</span> (key == <span class="hljs-keyword">null</span>)
+        <span class="hljs-keyword">return</span> putForNullKey(value);
+    <span class="hljs-keyword">int</span> hash = hash(key);
+    <span class="hljs-comment">// 确定桶下标</span>
+    <span class="hljs-keyword">int</span> i = indexFor(hash, table.length);
+    <span class="hljs-comment">// 先找出是否已经存在键为 key 的键值对，如果存在的话就更新这个键值对的值为 value</span>
+    <span class="hljs-keyword">for</span> (Entry&lt;K,V&gt; e = table[i]; e != <span class="hljs-keyword">null</span>; e = e.next) &#123;
+        Object k;
+        <span class="hljs-keyword">if</span> (e.hash == hash &amp;&amp; ((k = e.key) == key || key.equals(k))) &#123;
+            V oldValue = e.value;
+            e.value = value;
+            e.recordAccess(<span class="hljs-keyword">this</span>);
+            <span class="hljs-keyword">return</span> oldValue;
+        &#125;
+    &#125;
+
+    modCount++;
+    <span class="hljs-comment">// 插入新键值对</span>
+    addEntry(hash, key, value, i);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;
+&#125;</code></pre></div>
+
+<p>HashMap 允许插入键为 null 的键值对。但是因为无法调用 null 的 hashCode() 方法，也就无法确定该键值对的桶下标，只能通过强制指定一个桶下标来存放。HashMap 使用第 0 个桶存放键为 null 的键值对。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">private</span> V <span class="hljs-title">putForNullKey</span><span class="hljs-params">(V value)</span> </span>&#123;
+    <span class="hljs-keyword">for</span> (Entry&lt;K,V&gt; e = table[<span class="hljs-number">0</span>]; e != <span class="hljs-keyword">null</span>; e = e.next) &#123;
+        <span class="hljs-keyword">if</span> (e.key == <span class="hljs-keyword">null</span>) &#123;
+            V oldValue = e.value;
+            e.value = value;
+            e.recordAccess(<span class="hljs-keyword">this</span>);
+            <span class="hljs-keyword">return</span> oldValue;
+        &#125;
+    &#125;
+    modCount++;
+    addEntry(<span class="hljs-number">0</span>, <span class="hljs-keyword">null</span>, value, <span class="hljs-number">0</span>);
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;
+&#125;</code></pre></div>
+
+<p>使用链表的头插法，也就是新的键值对插在链表的头部，而不是链表的尾部。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">addEntry</span><span class="hljs-params">(<span class="hljs-keyword">int</span> hash, K key, V value, <span class="hljs-keyword">int</span> bucketIndex)</span> </span>&#123;
+    <span class="hljs-keyword">if</span> ((size &gt;= threshold) &amp;&amp; (<span class="hljs-keyword">null</span> != table[bucketIndex])) &#123;
+        resize(<span class="hljs-number">2</span> * table.length);
+        hash = (<span class="hljs-keyword">null</span> != key) ? hash(key) : <span class="hljs-number">0</span>;
+        bucketIndex = indexFor(hash, table.length);
+    &#125;
+
+    createEntry(hash, key, value, bucketIndex);
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">createEntry</span><span class="hljs-params">(<span class="hljs-keyword">int</span> hash, K key, V value, <span class="hljs-keyword">int</span> bucketIndex)</span> </span>&#123;
+    Entry&lt;K,V&gt; e = table[bucketIndex];
+    <span class="hljs-comment">// 头插法，链表头部指向新的键值对</span>
+    table[bucketIndex] = <span class="hljs-keyword">new</span> Entry&lt;&gt;(hash, key, value, e);
+    size++;
+&#125;
+Entry(<span class="hljs-keyword">int</span> h, K k, V v, Entry&lt;K,V&gt; n) &#123;
+    value = v;
+    next = n;
+    key = k;
+    hash = h;
+&#125;</code></pre></div>
+
+<h3 id="4-确定桶下标"><a href="#4-确定桶下标" class="headerlink" title="4. 确定桶下标"></a>4. 确定桶下标</h3><p>很多操作都需要先确定一个键值对所在的桶下标。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">int</span> hash = hash(key);
+<span class="hljs-keyword">int</span> i = indexFor(hash, table.length);</code></pre></div>
+
+<p><strong>4.1 计算 hash 值</strong></p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hash</span><span class="hljs-params">(Object k)</span> </span>&#123;
+    <span class="hljs-keyword">int</span> h = hashSeed;
+    <span class="hljs-keyword">if</span> (<span class="hljs-number">0</span> != h &amp;&amp; k <span class="hljs-keyword">instanceof</span> String) &#123;
+        <span class="hljs-keyword">return</span> sun.misc.Hashing.stringHash32((String) k);
+    &#125;
+
+    h ^= k.hashCode();
+
+    <span class="hljs-comment">// This function ensures that hashCodes that differ only by</span>
+    <span class="hljs-comment">// constant multiples at each bit position have a bounded</span>
+    <span class="hljs-comment">// number of collisions (approximately 8 at default load factor).</span>
+    h ^= (h &gt;&gt;&gt; <span class="hljs-number">20</span>) ^ (h &gt;&gt;&gt; <span class="hljs-number">12</span>);
+    <span class="hljs-keyword">return</span> h ^ (h &gt;&gt;&gt; <span class="hljs-number">7</span>) ^ (h &gt;&gt;&gt; <span class="hljs-number">4</span>);
+&#125;
+<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hashCode</span><span class="hljs-params">()</span> </span>&#123;
+    <span class="hljs-keyword">return</span> Objects.hashCode(key) ^ Objects.hashCode(value);
+&#125;</code></pre></div>
+
+<p><strong>4.2 取模</strong></p>
+<p>令 x = 1&lt;&lt;4，即 x 为 2 的 4 次方，它具有以下性质：</p>
+<div class="hljs"><pre><code class="hljs java">x   : <span class="hljs-number">00010000</span>
+x-<span class="hljs-number">1</span> : <span class="hljs-number">00001111</span></code></pre></div>
+
+<p>令一个数 y 与 x-1 做与运算，可以去除 y 位级表示的第 4 位以上数：</p>
+<div class="hljs"><pre><code class="hljs java">y       : <span class="hljs-number">10110010</span>
+x-<span class="hljs-number">1</span>     : <span class="hljs-number">00001111</span>
+y&amp;(x-<span class="hljs-number">1</span>) : <span class="hljs-number">00000010</span></code></pre></div>
+
+<p>这个性质和 y 对 x 取模效果是一样的：</p>
+<div class="hljs"><pre><code class="hljs java">y   : <span class="hljs-number">10110010</span>
+x   : <span class="hljs-number">00010000</span>
+y%x : <span class="hljs-number">00000010</span></code></pre></div>
+
+<p>我们知道，位运算的代价比求模运算小的多，因此在进行这种计算时用位运算的话能带来更高的性能。</p>
+<p>确定桶下标的最后一步是将 key 的 hash 值对桶个数取模：hash%capacity，如果能保证 capacity 为 2 的 n 次方，那么就可以将这个操作转换为位运算。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">indexFor</span><span class="hljs-params">(<span class="hljs-keyword">int</span> h, <span class="hljs-keyword">int</span> length)</span> </span>&#123;
+    <span class="hljs-keyword">return</span> h &amp; (length-<span class="hljs-number">1</span>);
+&#125;</code></pre></div>
+
+<h3 id="5-扩容-基本原理"><a href="#5-扩容-基本原理" class="headerlink" title="5. 扩容-基本原理"></a>5. 扩容-基本原理</h3><p>设 HashMap 的 table 长度为 M，需要存储的键值对数量为 N，如果哈希函数满足均匀性的要求，那么每条链表的长度大约为 N/M，因此查找的复杂度为 O(N/M)。</p>
+<p>为了让查找的成本降低，应该使 N/M 尽可能小，因此需要保证 M 尽可能大，也就是说 table 要尽可能大。HashMap 采用动态扩容来根据当前的 N 值来调整 M 值，使得空间效率和时间效率都能得到保证。</p>
+<p>和扩容相关的参数主要有：capacity、size、threshold 和 load_factor。</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>capacity</td>
+<td>table 的容量大小，默认为 16。需要注意的是 capacity 必须保证为 2 的 n 次方。</td>
+</tr>
+<tr>
+<td>size</td>
+<td>键值对数量。</td>
+</tr>
+<tr>
+<td>threshold</td>
+<td>size 的临界值，当 size 大于等于 threshold 就必须进行扩容操作。</td>
+</tr>
+<tr>
+<td>loadFactor</td>
+<td>装载因子，table 能够使用的比例，threshold = (int)(capacity* loadFactor)。</td>
+</tr>
+</tbody></table>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> DEFAULT_INITIAL_CAPACITY = <span class="hljs-number">16</span>;
+
+<span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> MAXIMUM_CAPACITY = <span class="hljs-number">1</span> &lt;&lt; <span class="hljs-number">30</span>;
+
+<span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">float</span> DEFAULT_LOAD_FACTOR = <span class="hljs-number">0.75f</span>;
+
+<span class="hljs-keyword">transient</span> Entry[] table;
+
+<span class="hljs-keyword">transient</span> <span class="hljs-keyword">int</span> size;
+
+<span class="hljs-keyword">int</span> threshold;
+
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">float</span> loadFactor;
+
+<span class="hljs-keyword">transient</span> <span class="hljs-keyword">int</span> modCount;</code></pre></div>
+
+<p>从下面的添加元素代码中可以看出，当需要扩容时，令 capacity 为原来的两倍。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">addEntry</span><span class="hljs-params">(<span class="hljs-keyword">int</span> hash, K key, V value, <span class="hljs-keyword">int</span> bucketIndex)</span> </span>&#123;
+    Entry&lt;K,V&gt; e = table[bucketIndex];
+    table[bucketIndex] = <span class="hljs-keyword">new</span> Entry&lt;&gt;(hash, key, value, e);
+    <span class="hljs-keyword">if</span> (size++ &gt;= threshold)
+        resize(<span class="hljs-number">2</span> * table.length);
+&#125;</code></pre></div>
+
+<p>扩容使用 resize() 实现，需要注意的是，扩容操作同样需要把 oldTable 的所有键值对重新插入 newTable 中，因此这一步是很费时的。</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">resize</span><span class="hljs-params">(<span class="hljs-keyword">int</span> newCapacity)</span> </span>&#123;
+    Entry[] oldTable = table;
+    <span class="hljs-keyword">int</span> oldCapacity = oldTable.length;
+    <span class="hljs-keyword">if</span> (oldCapacity == MAXIMUM_CAPACITY) &#123;
+        threshold = Integer.MAX_VALUE;
+        <span class="hljs-keyword">return</span>;
+    &#125;
+    Entry[] newTable = <span class="hljs-keyword">new</span> Entry[newCapacity];
+    transfer(newTable);
+    table = newTable;
+    threshold = (<span class="hljs-keyword">int</span>)(newCapacity * loadFactor);
+&#125;
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">transfer</span><span class="hljs-params">(Entry[] newTable)</span> </span>&#123;
+    Entry[] src = table;
+    <span class="hljs-keyword">int</span> newCapacity = newTable.length;
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> j = <span class="hljs-number">0</span>; j &lt; src.length; j++) &#123;
+        Entry&lt;K,V&gt; e = src[j];
+        <span class="hljs-keyword">if</span> (e != <span class="hljs-keyword">null</span>) &#123;
+            src[j] = <span class="hljs-keyword">null</span>;
+            <span class="hljs-keyword">do</span> &#123;
+                Entry&lt;K,V&gt; next = e.next;
+                <span class="hljs-keyword">int</span> i = indexFor(e.hash, newCapacity);
+                e.next = newTable[i];
+                newTable[i] = e;
+                e = next;
+            &#125; <span class="hljs-keyword">while</span> (e != <span class="hljs-keyword">null</span>);
+        &#125;
+    &#125;
+&#125;</code></pre></div>
+
+<h3 id="6-扩容-重新计算桶下标"><a href="#6-扩容-重新计算桶下标" class="headerlink" title="6. 扩容-重新计算桶下标"></a>6. 扩容-重新计算桶下标</h3><p>在进行扩容时，需要把键值对重新计算桶下标，从而放到对应的桶上。在前面提到，HashMap 使用 hash%capacity 来确定桶下标。HashMap capacity 为 2 的 n 次方这一特点能够极大降低重新计算桶下标操作的复杂度。</p>
+<p>假设原数组长度 capacity 为 16，扩容之后 new capacity 为 32：</p>
+<div class="hljs"><pre><code class="hljs java">capacity     : <span class="hljs-number">00010000</span>
+<span class="hljs-keyword">new</span> capacity : <span class="hljs-number">00100000</span></code></pre></div>
+
+<p>对于一个 Key，它的哈希值 hash 在第 5 位：</p>
+<ul>
+<li>为 0，那么 hash%00010000 = hash%00100000，桶位置和原来一致；</li>
+<li>为 1，hash%00010000 = hash%00100000 + 16，桶位置是原位置 + 16。</li>
+</ul>
+<h3 id="7-计算数组容量"><a href="#7-计算数组容量" class="headerlink" title="7. 计算数组容量"></a>7. 计算数组容量</h3><p>HashMap 构造函数允许用户传入的容量不是 2 的 n 次方，因为它可以自动地将传入的容量转换为 2 的 n 次方。</p>
+<p>先考虑如何求一个数的掩码，对于 10010000，它的掩码为 11111111，可以使用以下方法得到：</p>
+<div class="hljs"><pre><code class="hljs java">mask |= mask &gt;&gt; <span class="hljs-number">1</span>    <span class="hljs-number">11011000</span>
+mask |= mask &gt;&gt; <span class="hljs-number">2</span>    <span class="hljs-number">11111110</span>
+mask |= mask &gt;&gt; <span class="hljs-number">4</span>    <span class="hljs-number">11111111</span></code></pre></div>
+
+<p>mask+1 是大于原始数字的最小的 2 的 n 次方。</p>
+<div class="hljs"><pre><code class="hljs java">num     <span class="hljs-number">10010000</span>
+mask+<span class="hljs-number">1</span> <span class="hljs-number">100000000</span></code></pre></div>
+
+<p>以下是 HashMap 中计算数组容量的代码：</p>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> <span class="hljs-title">tableSizeFor</span><span class="hljs-params">(<span class="hljs-keyword">int</span> cap)</span> </span>&#123;
+    <span class="hljs-keyword">int</span> n = cap - <span class="hljs-number">1</span>;
+    n |= n &gt;&gt;&gt; <span class="hljs-number">1</span>;
+    n |= n &gt;&gt;&gt; <span class="hljs-number">2</span>;
+    n |= n &gt;&gt;&gt; <span class="hljs-number">4</span>;
+    n |= n &gt;&gt;&gt; <span class="hljs-number">8</span>;
+    n |= n &gt;&gt;&gt; <span class="hljs-number">16</span>;
+    <span class="hljs-keyword">return</span> (n &lt; <span class="hljs-number">0</span>) ? <span class="hljs-number">1</span> : (n &gt;= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + <span class="hljs-number">1</span>;
+&#125;</code></pre></div>
+
+<h3 id="8-链表转红黑树"><a href="#8-链表转红黑树" class="headerlink" title="8. 链表转红黑树"></a>8. 链表转红黑树</h3><p>从 JDK 1.8 开始，一个桶存储的链表长度大于等于 8 时会将链表转换为红黑树。</p>
+<h3 id="9-与-Hashtable-的比较"><a href="#9-与-Hashtable-的比较" class="headerlink" title="9. 与 Hashtable 的比较"></a>9. 与 Hashtable 的比较</h3><blockquote>
+<p>1.<strong>HashTable的方法是同步的</strong>，在方法的前面都有synchronized来同步，<strong>HashMap未经同步</strong>，所以在多线程场合要手动同步<br>2.<strong>HashTable不允许null值</strong>(key和value都不可以) ,<strong>HashMap允许null值</strong>(key和value都可以)。<br>3.HashTable有一个contains(Object value)功能和containsValue(Object value)功能一样。<br>4.HashTable使用Enumeration进行遍历，HashMap使用Iterator进行遍历。<br>5.HashTable中hash数组默认大小是11，增加的方式是 old*2+1。HashMap中hash数组的默认大小是16，而且一定是2的指数。<br>6.哈希值的使用不同，HashTable直接使用对象的hashCode，代码是这样的：</p>
+</blockquote>
+<div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">int</span> hash = key.hashCode();
+<span class="hljs-keyword">int</span> index = (hash &amp; <span class="hljs-number">0x7FFFFFFF</span>) % tab.length;</code></pre></div>
+
+<blockquote>
+<p>而HashMap重新计算hash值，而且用与代替求模</p>
+</blockquote>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Java/">Java</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/Java/">Java</a>
+                    
+                      <a class="hover-with-bg" href="/tags/Java%E5%AE%B9%E5%99%A8/">Java容器</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！</p>
+              
+              
+                <div class="post-prevnext row">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2020/06/02/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%BF%B0/">
+                        <span class="hidden-mobile">设计模式（一）——设计模式概述</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+              <!-- Comments -->
+              <article class="comments" id="comments">
+                
+                
+  <div id="vcomments"></div>
+  <script type="text/javascript">
+    function loadValine() {
+      addScript('https://cdn.staticfile.org/valine/1.4.14/Valine.min.js', function () {
+        new Valine({
+          el: "#vcomments",
+          app_id: "DQP3rwVtn77z2B5pTJau07ec-MdYXbMMI",
+          app_key: "D7C5Oe3Hr8zKTIOAKjbkRmNz",
+          placeholder: "说点什么",
+          path: window.location.pathname,
+          avatar: "retro",
+          meta: ["nick","mail","link"],
+          pageSize: "10",
+          lang: "zh-CN",
+          highlight: false,
+          recordIP: false,
+          serverURLs: "",
+        });
+      });
+    }
+    waitElementVisible('vcomments', loadValine);
+  </script>
+  <noscript>Please enable JavaScript to view the <a target="_blank" href="https://valine.js.org" rel="nofollow noopener noopener">comments
+      powered by Valine.</a></noscript>
+
+
+              </article>
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div id="tocbot"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+  </main>
+
+  
+    <a id="scroll-top-button" href="#" role="button">
+      <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+    </a>
+  
+
+  
+    <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
+  
+
+  
+
+  <footer class="mt-5">
+  <div class="text-center py-3">
+    <div>
+      <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a>
+      <i class="iconfont icon-love"></i>
+      <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener">
+        <span>Fluid</span></a>
+    </div>
+    
+
+    
+
+    
+  </div>
+</footer>
+
+<!-- SCRIPTS -->
+<script  src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js" ></script>
+<script  src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js" ></script>
+<script  src="/js/debouncer.js" ></script>
+<script  src="/js/main.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+  <script  src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js" ></script>
+  <script>
+    $(document).ready(function () {
+      var boardCtn = $('#board-ctn');
+      var boardTop = boardCtn.offset().top;
+
+      tocbot.init({
+        tocSelector: '#tocbot',
+        contentSelector: '#post-body',
+        headingSelector: 'h1,h2,h3,h4,h5,h6',
+        linkClass: 'tocbot-link',
+        activeLinkClass: 'tocbot-active-link',
+        listClass: 'tocbot-list',
+        isCollapsedClass: 'tocbot-is-collapsed',
+        collapsibleClass: 'tocbot-is-collapsible',
+        collapseDepth: 0,
+        scrollSmooth: true,
+        headingsOffset: -boardTop
+      });
+      if ($('.toc-list-item').length > 0) {
+        $('#toc').css('visibility', 'visible');
+      }
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js" ></script>
+  <script>
+    var typed = new Typed('#subtitle', {
+      strings: [
+        '  ',
+        "聊一聊HashMap的源码&nbsp;",
+      ],
+      cursorChar: "_",
+      typeSpeed: 70,
+      loop: false,
+    });
+    typed.stop();
+    $(document).ready(function () {
+      $(".typed-cursor").addClass("h2");
+      typed.start();
+    });
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js" ></script>
+  <script>
+    anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))
+  </script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+  <script>
+    var path = "/local-search.xml";
+    var inputArea = document.querySelector("#local-search-input");
+    inputArea.onclick = function () {
+      searchFunc(path, 'local-search-input', 'local-search-result');
+      this.onclick = null
+    }
+  </script>
+
+
+
+  <script  src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <script>
+    $('#post img:not(.no-zoom img, img[no-zoom]), img[zoom]').each(
+      function () {
+        var element = document.createElement('a');
+        $(element).attr('data-fancybox', 'images');
+        $(element).attr('href', $(this).attr('src'));
+        $(this).wrap(element);
+      }
+    );
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
