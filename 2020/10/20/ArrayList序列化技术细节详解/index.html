@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="zh-CN" data-default-color-scheme="&#34;auto&#34;"><head><meta charset="UTF-8"><link rel="apple-touch-icon" sizes="76x76" href="/img/favicon-32x32-next.png"><link rel="icon" type="image/png" href="/img/og_image.png"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,shrink-to-fit=no"><meta http-equiv="x-ua-compatible" content="ie=edge"><meta name="theme-color" content="#2f4154"><meta name="description" content=""><meta name="author" content="noarsark"><meta name="keywords" content=""><title>noarsark&#39;s space</title><link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css"><link rel="stylesheet" href="/lib/hint/hint.min.css"><link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/monokai-sublime.min.css"><link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_pf9vaxs7x7b.css"><link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css"><link rel="stylesheet" href="/css/main.css"><script src="/js/utils.js"></script><script src="/js/color-schema.js"></script><meta name="generator" content="Hexo 5.2.0"></head><body><header style="height:70vh"><nav id="navbar" class="navbar fixed-top navbar-expand-lg navbar-dark scrolling-navbar"><div class="container"><a class="navbar-brand" href="/">&nbsp;<strong>noarsark's space</strong>&nbsp;</a> <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><div class="animated-icon"><span></span><span></span><span></span></div></button><div class="collapse navbar-collapse" id="navbarSupportedContent"><ul class="navbar-nav ml-auto text-center"><li class="nav-item"><a class="nav-link" href="/"><i class="iconfont icon-home-fill"></i> 首页</a></li><li class="nav-item"><a class="nav-link" href="/archives/"><i class="iconfont icon-archive-fill"></i> 归档</a></li><li class="nav-item"><a class="nav-link" href="/categories/"><i class="iconfont icon-category-fill"></i> 分类</a></li><li class="nav-item"><a class="nav-link" href="/tags/"><i class="iconfont icon-tags-fill"></i> 标签</a></li><li class="nav-item"><a class="nav-link" href="/about/"><i class="iconfont icon-user-fill"></i> 关于</a></li><li class="nav-item" id="search-btn"><a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;<i class="iconfont icon-search"></i>&nbsp;</a></li><li class="nav-item" id="color-toggle-btn"><a class="nav-link" href="javascript:">&nbsp;<i class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a></li></ul></div></div></nav><div class="banner intro-2" id="background" parallax="true" style="background:url(/img/5%20centimeters%20per%20second.jpeg) no-repeat center center;background-size:cover"><div class="full-bg-img"><div class="mask flex-center" style="background-color:rgba(0,0,0,.3)"><div class="container page-header text-center fade-in-up"><span class="h2" id="subtitle"></span><div class="mt-3"><span class="post-meta"><i class="iconfont icon-date-fill" aria-hidden="true"></i> <time datetime="2020-10-20 22:19" pubdate>2020年10月20日 晚上</time></span></div><div class="mt-1"><span class="post-meta mr-2"><i class="iconfont icon-chart"></i> 2.3k 字 </span><span class="post-meta mr-2"><i class="iconfont icon-clock-fill"></i> 30 分钟</span></div></div></div></div></div></header><main><div class="container-fluid"><div class="row"><div class="d-none d-lg-block col-lg-2"></div><div class="col-lg-8 nopadding-md"><div class="container nopadding-md" id="board-ctn"><div class="py-5" id="board"><article class="post-content mx-auto" id="post"><h1 style="display:none"></h1><div class="markdown-body" id="post-body"><h1 id="一、绪论"><a href="#一、绪论" class="headerlink" title="一、绪论"></a>一、绪论</h1><p>所谓的JAVA序列化与反序列化，序列化就是将JAVA 对象以一种的形式保持，比如存放到硬盘，或是用于传输。反序列化是序列化的一个逆过程。</p><p>JAVA规定被序列化的对象必须实现java.io.Serializable这个接口，而我们分析的目标ArrayList同样实现了该接口。</p><p>通过对ArrayList源码的分析，可以知道ArrayList的数据存储都是依赖于elementData数组，它的声明为：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">transient</span> Object[] elementData;
+注意<span class="hljs-keyword">transient</span>修饰着elementData这个数组。</code></pre></div><h2 id="1、先看看transient关键字的作用"><a href="#1、先看看transient关键字的作用" class="headerlink" title="1、先看看transient关键字的作用"></a>1、先看看transient关键字的作用</h2><p>我们都知道一个对象只要实现了Serilizable接口，这个对象就可以被序列化，java的这种序列化模式为开发者提供了很多便利，我们可以不必关系具体序列化的过程，只要这个类实现了Serilizable接口，这个类的所有属性和方法都会自动序列化。</p><p>然而在实际开发过程中，我们常常会遇到这样的问题，这个类的有些属性需要序列化，而其他属性不需要被序列化，打个比方，如果一个用户有一些敏感信息（如密码，银行卡号等），为了安全起见，不希望在网络操作（主要涉及到序列化操作，本地序列化缓存也适用）中被传输，这些信息对应的变量就可以加上 transient关键字。换句话说，这个字段的生命周期仅存于调用者的内存中而不会写到磁盘里持久化。</p><p>总之，java 的transient关键字为我们提供了便利，你只需要实现Serilizable接口，将不需要序列化的属性前添加关键字transient，序列化对象的时候，这个属性就不会序列化到指定的目的地中。</p><p>具体详见：<a target="_blank" rel="noopener" href="http://www.cnblogs.com/lanxuezaipiao/p/3369962.html">Java transient关键字使用小记</a></p><p>既然elementData被transient修饰，按理来说，它不能被序列化的，那么ArrayList又是如何解决序列化这个问题的呢？</p><h1 id="二、序列化工作流程"><a href="#二、序列化工作流程" class="headerlink" title="二、序列化工作流程"></a>二、序列化工作流程</h1><p>类通过实现java.io.Serializable接口可以启用其序列化功能。要序列化一个对象，必须与一定的对象输出／输入流联系起来，通过对象输出流将对象状态保存下来，再通过对象输入流将对象状态恢复。</p><p>在序列化和反序列化过程中需要特殊处理的类必须使用下列准确签名来实现特殊方法：</p><p>private void writeObject(java.io.ObjectOutputStream out) throws IOException</p><p>private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException</p><h2 id="1、对象序列化步骤"><a href="#1、对象序列化步骤" class="headerlink" title="1、对象序列化步骤"></a>1、对象序列化步骤</h2><p>a) 写入</p><ul><li>首先创建一个OutputStream输出流；</li><li>然后创建一个ObjectOutputStream输出流，并传入OutputStream输出流对象；</li><li>最后调用ObjectOutputStream对象的writeObject()方法将对象状态信息写入OutputStream。</li></ul><p>b)读取</p><ul><li>首先创建一个InputStream输入流；</li><li>然后创建一个ObjectInputStream输入流，并传入InputStream输入流对象；</li><li>最后调用ObjectInputStream对象的readObject()方法从InputStream中读取对象状态信息。</li></ul><p>举例说明：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Box</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">Serializable</span> </span>&#123;
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">long</span> serialVersionUID = -<span class="hljs-number">3450064362986273896L</span>;
+    
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> width;
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> height;
+    
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;
+        Box myBox=<span class="hljs-keyword">new</span> Box();
+        myBox.setWidth(<span class="hljs-number">50</span>);
+        myBox.setHeight(<span class="hljs-number">30</span>);
+        <span class="hljs-keyword">try</span> &#123;
+            FileOutputStream fs=<span class="hljs-keyword">new</span> FileOutputStream(<span class="hljs-string">&quot;F:\\foo.ser&quot;</span>);
+            ObjectOutputStream os=<span class="hljs-keyword">new</span> ObjectOutputStream(fs);
+            os.writeObject(myBox);
+            os.close();
+            FileInputStream fi=<span class="hljs-keyword">new</span> FileInputStream(<span class="hljs-string">&quot;F:\\foo.ser&quot;</span>);
+            ObjectInputStream oi=<span class="hljs-keyword">new</span> ObjectInputStream(fi);
+            Box box=(Box)oi.readObject();
+            oi.close();
+            System.out.println(box.height+<span class="hljs-string">&quot;,&quot;</span>+box.width);
+        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;
+            e.printStackTrace();
+        &#125;
+    &#125;
+    
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getWidth</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> width;
+    &#125;
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setWidth</span><span class="hljs-params">(<span class="hljs-keyword">int</span> width)</span> </span>&#123;
+        <span class="hljs-keyword">this</span>.width = width;
+    &#125;
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getHeight</span><span class="hljs-params">()</span> </span>&#123;
+        <span class="hljs-keyword">return</span> height;
+    &#125;
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setHeight</span><span class="hljs-params">(<span class="hljs-keyword">int</span> height)</span> </span>&#123;
+        <span class="hljs-keyword">this</span>.height = height;
+    &#125;
+&#125;</code></pre></div><h1 id="三、ArrayList解决序列化"><a href="#三、ArrayList解决序列化" class="headerlink" title="三、ArrayList解决序列化"></a>三、ArrayList解决序列化</h1><h2 id="1、序列化"><a href="#1、序列化" class="headerlink" title="1、序列化"></a>1、序列化</h2><p>从上面序列化的工作流程可以看出，要想序列化对象，使用ObjectOutputStream对象输出流的writeObject()方法写入对象状态信息，即可使用readObject()方法读取信息。</p><p>那是不是可以在ArrayList中调用ObjectOutputStream对象的writeObject()方法将elementData的值写入输出流呢？</p><p>见源码：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">writeObject</span><span class="hljs-params">(java.io.ObjectOutputStream s)</span> <span class="hljs-keyword">throws</span> java.io.IOException</span>
+<span class="hljs-function"></span>&#123;
+    <span class="hljs-comment">// Write out element count, and any hidden stuff</span>
+    <span class="hljs-keyword">int</span> expectedModCount = modCount;
+    s.defaultWriteObject();
+    <span class="hljs-comment">// Write out size as capacity for behavioural compatibility with clone()</span>
+    s.writeInt(size);
+    <span class="hljs-comment">// Write out all elements in the proper order.</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; size; i++)
+    &#123;
+        s.writeObject(elementData[i]);
+    &#125;
+    <span class="hljs-keyword">if</span> (modCount != expectedModCount)
+    &#123;
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> ConcurrentModificationException();
+    &#125;
+&#125;</code></pre></div><p>虽然elementData被transient修饰，不能被序列化，但是我们可以将它的值取出来，然后将该值写入输出流。</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-comment">// 片段1 它的功能等价于片段2</span>
+s.writeObject(elementData[i]);  <span class="hljs-comment">// 传值时，是将实参elementData[i]赋给s.writeObject()的形参</span>
+<span class="hljs-comment">//  片段2</span>
+Object temp = <span class="hljs-keyword">new</span> Object();     <span class="hljs-comment">// temp并没有被transient修饰</span>
+temp = elementData[i];
+s.writeObject(temp);</code></pre></div><h2 id="2、反序列化"><a href="#2、反序列化" class="headerlink" title="2、反序列化"></a>2、反序列化</h2><p>ArrayList的反序列化处理原理同上，见源码：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">readObject</span><span class="hljs-params">(java.io.ObjectInputStream s)</span> <span class="hljs-keyword">throws</span> java.io.IOException, ClassNotFoundException</span>
+<span class="hljs-function"></span>&#123;
+    elementData = EMPTY_ELEMENTDATA;
+    <span class="hljs-comment">// Read in size, and any hidden stuff</span>
+    s.defaultReadObject();
+    <span class="hljs-comment">// Read in capacity</span>
+    s.readInt(); <span class="hljs-comment">// ignored</span>
+    <span class="hljs-keyword">if</span> (size &gt; <span class="hljs-number">0</span>)
+    &#123;
+        <span class="hljs-comment">// be like clone(), allocate array based upon size not capacity</span>
+        ensureCapacityInternal(size);
+        Object[] a = elementData;
+        <span class="hljs-comment">// Read in all elements in the proper order.</span>
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; size; i++)
+        &#123;
+            a[i] = s.readObject();
+        &#125;
+    &#125;
+&#125;</code></pre></div><p>从上面源码又引出另外一个问题，这些方法都定义为private的，那什么时候能调用呢？</p><h2 id="3、调用"><a href="#3、调用" class="headerlink" title="3、调用"></a>3、调用</h2><p>如果一个类不仅实现了Serializable接口，而且定义了 readObject（ObjectInputStream in）和 writeObject(ObjectOutputStream out)方法，那么将按照如下的方式进行序列化和反序列化：</p><blockquote><p>ObjectOutputStream会调用这个类的writeObject方法进行序列化，ObjectInputStream会调用相应的readObject方法进行反序列化。</p></blockquote><p>事情到底是这样的吗？我们做个小实验，来验明正身。<br>实验1：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestSerialization</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">Serializable</span></span>
+<span class="hljs-class"></span>&#123;
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">transient</span> <span class="hljs-keyword">int</span>    num;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getNum</span><span class="hljs-params">()</span></span>
+<span class="hljs-function">    </span>&#123;
+        <span class="hljs-keyword">return</span> num;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setNum</span><span class="hljs-params">(<span class="hljs-keyword">int</span> num)</span></span>
+<span class="hljs-function">    </span>&#123;
+        <span class="hljs-keyword">this</span>.num = num;
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">writeObject</span><span class="hljs-params">(java.io.ObjectOutputStream s)</span></span>
+<span class="hljs-function">            <span class="hljs-keyword">throws</span> java.io.IOException</span>
+<span class="hljs-function">    </span>&#123;
+        s.defaultWriteObject();
+        s.writeObject(num);
+        System.out.println(<span class="hljs-string">&quot;writeObject of &quot;</span>+<span class="hljs-keyword">this</span>.getClass().getName());
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">readObject</span><span class="hljs-params">(java.io.ObjectInputStream s)</span></span>
+<span class="hljs-function">            <span class="hljs-keyword">throws</span> java.io.IOException, ClassNotFoundException</span>
+<span class="hljs-function">    </span>&#123;
+        s.defaultReadObject();
+        num = (Integer) s.readObject();
+        System.out.println(<span class="hljs-string">&quot;readObject of &quot;</span>+<span class="hljs-keyword">this</span>.getClass().getName());
+    &#125;
+
+    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span></span>
+<span class="hljs-function">    </span>&#123;
+        TestSerialization test = <span class="hljs-keyword">new</span> TestSerialization();
+        test.setNum(<span class="hljs-number">10</span>);
+        System.out.println(<span class="hljs-string">&quot;序列化之前的值：&quot;</span>+test.getNum());
+        <span class="hljs-comment">// 写入</span>
+        <span class="hljs-keyword">try</span>
+        &#123;
+            ObjectOutputStream outputStream = <span class="hljs-keyword">new</span> ObjectOutputStream(
+                    <span class="hljs-keyword">new</span> FileOutputStream(<span class="hljs-string">&quot;D:\\test.tmp&quot;</span>));
+            outputStream.writeObject(test);
+        &#125; <span class="hljs-keyword">catch</span> (FileNotFoundException e)
+        &#123;
+            e.printStackTrace();
+        &#125; <span class="hljs-keyword">catch</span> (IOException e)
+        &#123;
+            e.printStackTrace();
+        &#125;
+        <span class="hljs-comment">// 读取</span>
+        <span class="hljs-keyword">try</span>
+        &#123;
+            ObjectInputStream oInputStream = <span class="hljs-keyword">new</span> ObjectInputStream(
+                    <span class="hljs-keyword">new</span> FileInputStream(<span class="hljs-string">&quot;D:\\test.tmp&quot;</span>));
+            <span class="hljs-keyword">try</span>
+            &#123;
+                TestSerialization aTest = (TestSerialization) oInputStream.readObject();
+                System.out.println(<span class="hljs-string">&quot;读取序列化后的值：&quot;</span>+aTest.getNum());
+            &#125; <span class="hljs-keyword">catch</span> (ClassNotFoundException e)
+            &#123;
+                e.printStackTrace();
+            &#125;
+        &#125; <span class="hljs-keyword">catch</span> (FileNotFoundException e)
+        &#123;
+            e.printStackTrace();
+        &#125; <span class="hljs-keyword">catch</span> (IOException e)
+        &#123;
+            e.printStackTrace();
+        &#125;
+    &#125;
+&#125;</code></pre></div><p>输出：</p><p>序列化之前的值：10<br>writeObject of TestSerialization<br>readObject of TestSerialization<br>读取序列化后的值：10</p><p>实验结果证明，事实确实是如此：</p><p>ObjectOutputStream会调用这个类的writeObject方法进行序列化，ObjectInputStream会调用相应的readObject方法进行反序列化。<br>那么ObjectOutputStream又是如何知道一个类是否实现了writeObject方法呢？又是如何自动调用该类的writeObject方法呢？</p><p>答案是：是通过反射机制实现的。</p><p>部分解答：</p><p>ObjectOutputStream的writeObject又做了哪些事情。它会根据传进来的ArrayList对象得到Class，然后再包装成 ObjectStreamClass，在writeSerialData方法里，会调用ObjectStreamClass的 invokeWriteObject方法，最重要的代码如下：</p><div class="hljs"><pre><code class="hljs java">writeObjectMethod.invoke(obj, <span class="hljs-keyword">new</span> Object[]&#123; out &#125;);</code></pre></div><p>实例变量writeObjectMethod的赋值方式如下：</p><div class="hljs"><pre><code class="hljs java">writeObjectMethod = getPrivateMethod(cl, <span class="hljs-string">&quot;writeObject&quot;</span>, 
+                <span class="hljs-keyword">new</span> Class[] &#123; ObjectOutputStream.class &#125;, 
+                Void.TYPE);
+
+ <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> Method <span class="hljs-title">getPrivateMethod</span><span class="hljs-params">(Class cl, String name,</span></span>
+<span class="hljs-function"><span class="hljs-params">        Class[] argTypes, Class returnType)</span></span>
+<span class="hljs-function"></span>&#123;
+    <span class="hljs-keyword">try</span>
+    &#123;
+        Method meth = cl.getDeclaredMethod(name, argTypes);
+        <span class="hljs-comment">// *****通过反射访问对象的private方法</span>
+        meth.setAccessible(<span class="hljs-keyword">true</span>);
+        <span class="hljs-keyword">int</span> mods = meth.getModifiers();
+        <span class="hljs-keyword">return</span> ((meth.getReturnType() == returnType)
+                &amp;&amp; ((mods &amp; Modifier.STATIC) == <span class="hljs-number">0</span>) &amp;&amp; ((mods &amp; Modifier.PRIVATE) != <span class="hljs-number">0</span>)) ? meth
+                : <span class="hljs-keyword">null</span>;
+    &#125; <span class="hljs-keyword">catch</span> (NoSuchMethodException ex)
+    &#123;
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">null</span>;
+    &#125;
+&#125;</code></pre></div><p>在做实验时，我们发现一个问题，那就是为什么需要s.defaultWriteObject();和s.defaultReadObject();语句在<code>readObject(ObjectInputStream o)</code> and <code>writeObject(ObjectOutputStream o)</code>之前呢？</p><p>它们的作用如下：</p><p>1、It reads and writes all the <code>non transient</code> fields of the class respectively.</p><p>2、 These methods also helps in backward and future compatibility. If in future you add some <code>non-transient</code> field to the class and you are trying to deserialize it by the older version of class then the defaultReadObject() method will neglect the newly added field, similarly if you deserialize the old serialized object by the new version then the new non transient field will take default value from JVM</p><h1 id="四、为什么使用transient修饰elementData？"><a href="#四、为什么使用transient修饰elementData？" class="headerlink" title="四、为什么使用transient修饰elementData？"></a>四、为什么使用transient修饰elementData？</h1><p>既然要将ArrayList的字段序列化（即将elementData序列化），那为什么又要用transient修饰elementData呢？</p><p>回想ArrayList的自动扩容机制，elementData数组相当于容器，当容器不足时就会再扩充容量，但是容器的容量往往都是大于或者等于ArrayList所存元素的个数。</p><p>比如，现在实际有了8个元素，那么elementData数组的容量可能是8x1.5=12，如果直接序列化elementData数组，那么就会浪费4个元素的空间，特别是当元素个数非常多时，这种浪费是非常不合算的。</p><p>所以ArrayList的设计者将elementData设计为transient，然后在writeObject方法中手动将其序列化，并且只序列化了实际存储的那些元素，而不是整个数组。</p><p>见源码：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-comment">// Write out all elements in the proper order.</span>
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i=<span class="hljs-number">0</span>; i&lt;size; i++) 
+&#123;
+    s.writeObject(elementData[i]);
+&#125;</code></pre></div><p>从源码中，可以观察到 循环时是使用i&lt;size而不是 i&lt;elementData.length，说明序列化时，只需实际存储的那些元素，而不是整个数组。</p></div><hr><div><div class="post-metas mb-3"></div><p class="note note-warning">本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！</p><div class="post-prevnext row"><article class="post-prev col-6"></article><article class="post-next col-6"><a href="/2020/09/28/%E8%81%8A%E4%B8%80%E8%81%8AHashMap/"><span class="hidden-mobile">聊一聊HashMap的源码</span> <span class="visible-mobile">下一篇</span> <i class="iconfont icon-arrowright"></i></a></article></div></div><article class="comments" id="comments"><div id="vcomments"></div><script type="text/javascript">function loadValine(){addScript("https://cdn.staticfile.org/valine/1.4.14/Valine.min.js",function(){new Valine({el:"#vcomments",app_id:"DQP3rwVtn77z2B5pTJau07ec-MdYXbMMI",app_key:"D7C5Oe3Hr8zKTIOAKjbkRmNz",placeholder:"说点什么",path:window.location.pathname,avatar:"retro",meta:["nick","mail","link"],pageSize:"10",lang:"zh-CN",highlight:!1,recordIP:!1,serverURLs:""})})}waitElementVisible("vcomments",loadValine)</script><noscript>Please enable JavaScript to view the <a target="_blank" href="https://valine.js.org" rel="nofollow noopener noopener">comments powered by Valine.</a></noscript></article></article></div></div></div><div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn"><div id="toc"><p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p><div id="tocbot"></div></div></div></div></div></main><a id="scroll-top-button" href="#" role="button"><i class="iconfont icon-arrowup" aria-hidden="true"></i></a><div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable modal-lg" role="document"><div class="modal-content"><div class="modal-header text-center"><h4 class="modal-title w-100 font-weight-bold">搜索</h4><button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body mx-3"><div class="md-form mb-5"><input type="text" id="local-search-input" class="form-control validate"> <label data-error="x" data-success="v" for="local-search-input">关键词</label></div><div class="list-group" id="local-search-result"></div></div></div></div></div><footer class="mt-5"><div class="text-center py-3"><div><a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a></div></div></footer><script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script><script src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script><script src="/js/debouncer.js"></script><script src="/js/main.js"></script><script src="/js/lazyload.js"></script><script src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js"></script><script>$(document).ready(function(){var t=$("#board-ctn").offset().top;tocbot.init({tocSelector:"#tocbot",contentSelector:"#post-body",headingSelector:"h1,h2,h3,h4,h5,h6",linkClass:"tocbot-link",activeLinkClass:"tocbot-active-link",listClass:"tocbot-list",isCollapsedClass:"tocbot-is-collapsed",collapsibleClass:"tocbot-is-collapsible",collapseDepth:0,scrollSmooth:!0,headingsOffset:-t}),0<$(".toc-list-item").length&&$("#toc").css("visibility","visible")})</script><script src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js"></script><script>var typed=new Typed("#subtitle",{strings:["  ","&nbsp;"],cursorChar:"_",typeSpeed:70,loop:!1});typed.stop(),$(document).ready(function(){$(".typed-cursor").addClass("h2"),typed.start()})</script><script src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js"></script><script>anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))</script><script src="/js/local-search.js"></script><script>var path="/local-search.xml",inputArea=document.querySelector("#local-search-input");inputArea.onclick=function(){searchFunc(path,"local-search-input","local-search-result"),this.onclick=null}</script><script src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js"></script><link rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css"><script>$("#post img:not(.no-zoom img, img[no-zoom]), img[zoom]").each(function(){var t=document.createElement("a");$(t).attr("data-fancybox","images"),$(t).attr("href",$(this).attr("src")),$(this).wrap(t)})</script></body></html>
