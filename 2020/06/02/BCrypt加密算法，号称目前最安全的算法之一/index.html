@@ -1,0 +1,587 @@
+<!DOCTYPE html><html lang="zh-CN" data-default-color-scheme="&#34;auto&#34;"><head><meta charset="UTF-8"><link rel="apple-touch-icon" sizes="76x76" href="https://cdn.jsdelivr.net/gh/noarsark/noarsark.github.io@master/img/favicon-32x32-next.png"><link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/noarsark/noarsark.github.io@master/img/og_image.png"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,shrink-to-fit=no"><meta http-equiv="x-ua-compatible" content="ie=edge"><meta name="theme-color" content="#2f4154"><meta name="description" content=""><meta name="author" content="noarsark"><meta name="keywords" content=""><title>BCrypt加密算法，号称目前最安全的算法之一 - noarsark&#39;s space</title><link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/css/bootstrap.min.css"><link rel="stylesheet" href="https://cdn.staticfile.org/github-markdown-css/4.0.0/github-markdown.min.css"><link rel="stylesheet" href="/lib/hint/hint.min.css"><link rel="stylesheet" href="https://cdn.staticfile.org/highlight.js/10.0.0/styles/monokai-sublime.min.css"><link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_pf9vaxs7x7b.css"><link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css"><link rel="stylesheet" href="/css/main.css"><script src="/js/utils.js"></script><script src="/js/color-schema.js"></script><meta name="generator" content="Hexo 5.2.0"></head><body><header style="height:70vh"><nav id="navbar" class="navbar fixed-top navbar-expand-lg navbar-dark scrolling-navbar"><div class="container"><a class="navbar-brand" href="/">&nbsp;<strong>noarsark's space</strong>&nbsp;</a> <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><div class="animated-icon"><span></span><span></span><span></span></div></button><div class="collapse navbar-collapse" id="navbarSupportedContent"><ul class="navbar-nav ml-auto text-center"><li class="nav-item"><a class="nav-link" href="/"><i class="iconfont icon-home-fill"></i> 首页</a></li><li class="nav-item"><a class="nav-link" href="/archives/"><i class="iconfont icon-archive-fill"></i> 归档</a></li><li class="nav-item"><a class="nav-link" href="/categories/"><i class="iconfont icon-category-fill"></i> 分类</a></li><li class="nav-item"><a class="nav-link" href="/tags/"><i class="iconfont icon-tags-fill"></i> 标签</a></li><li class="nav-item"><a class="nav-link" href="/about/"><i class="iconfont icon-user-fill"></i> 关于</a></li><li class="nav-item" id="search-btn"><a class="nav-link" data-toggle="modal" data-target="#modalSearch">&nbsp;<i class="iconfont icon-search"></i>&nbsp;</a></li><li class="nav-item" id="color-toggle-btn"><a class="nav-link" href="javascript:">&nbsp;<i class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a></li></ul></div></div></nav><div class="banner intro-2" id="background" parallax="true" style="background:url(https://cdn.jsdelivr.net/gh/noarsark/noarsark.github.io@master/img/5centimeterspersecond.jpeg) no-repeat center center;background-size:cover"><div class="full-bg-img"><div class="mask flex-center" style="background-color:rgba(0,0,0,.3)"><div class="container page-header text-center fade-in-up"><span class="h2" id="subtitle"></span><div class="mt-3"><span class="post-meta"><i class="iconfont icon-date-fill" aria-hidden="true"></i> <time datetime="2020-06-02 21:49" pubdate>2020年6月2日 晚上</time></span></div><div class="mt-1"><span class="post-meta mr-2"><i class="iconfont icon-chart"></i> 4.6k 字 </span><span class="post-meta mr-2"><i class="iconfont icon-clock-fill"></i> 76 分钟</span></div></div></div></div></div></header><main><div class="container-fluid"><div class="row"><div class="d-none d-lg-block col-lg-2"></div><div class="col-lg-8 nopadding-md"><div class="container nopadding-md" id="board-ctn"><div class="py-5" id="board"><article class="post-content mx-auto" id="post"><h1 style="display:none">BCrypt加密算法，号称目前最安全的算法之一</h1><div class="markdown-body" id="post-body"><h1 id="一、哈希（Hash）与加密（Encrypt）"><a href="#一、哈希（Hash）与加密（Encrypt）" class="headerlink" title="一、哈希（Hash）与加密（Encrypt）"></a>一、哈希（Hash）与加密（Encrypt）</h1><p><strong>哈希（Hash）是将目标文本转换成具有相同长度的、不可逆的杂凑字符串（或叫做消息摘要），而加密（Encrypt）是将目标文本转换成具有不同长度的、可逆的密文。</strong></p><ol><li>哈希算法往往被设计成生成具有相同长度的文本，而加密算法生成的文本长度与明文本身的长度有关。</li><li>哈希算法是不可逆的，而加密算法是可逆的。</li></ol><p>HASH 算法是一种消息摘要算法，不是一种加密算法，但由于其单向运算，具有一定的不可逆性，成为加密算法中的一个构成部分。</p><p>JDK的String的Hash算法。代码如下：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hashCode</span><span class="hljs-params">()</span> </span>&#123;
+    <span class="hljs-keyword">int</span> h = hash;
+    <span class="hljs-keyword">if</span> (h == <span class="hljs-number">0</span> &amp;&amp; value.length &gt; <span class="hljs-number">0</span>) &#123;
+        <span class="hljs-keyword">char</span> val[] = value;
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; value.length; i++) &#123;
+            h = <span class="hljs-number">31</span> * h + val[i];
+        &#125;
+        hash = h;
+    &#125;
+    <span class="hljs-keyword">return</span> h;
+&#125;</code></pre></div><p>从JDK的API可以看出，它的算法等式就是s[0]*31^(n-1) + s[1]*31^(n-2) + … + s[n-1]，其中s[i]就是索引为i的字符，n为字符串的长度。</p><p>HashMap的hash计算时先计算hashCode(),然后进行二次hash。代码如下：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hash</span><span class="hljs-params">(<span class="hljs-keyword">int</span> h)</span> </span>&#123;
+    h ^= (h &gt;&gt;&gt; <span class="hljs-number">20</span>) ^ (h &gt;&gt;&gt; <span class="hljs-number">12</span>);
+    <span class="hljs-keyword">return</span> h ^ (h &gt;&gt;&gt; <span class="hljs-number">7</span>) ^ (h &gt;&gt;&gt; <span class="hljs-number">4</span>);
+&#125;</code></pre></div><p>大家可以发现，虽然算法不同，但经过这些移位操作后，对于同一个值使用同一个算法，计算出来的hash值一定是相同的。</p><h3 id="那么，hash为什么是不可逆的呢？"><a href="#那么，hash为什么是不可逆的呢？" class="headerlink" title="那么，hash为什么是不可逆的呢？"></a>那么，hash为什么是不可逆的呢？</h3><p>假如有两个密码3和4，我的加密算法很简单就是3+4，结果是7，但是通过7我不可能确定那两个密码是3和4，有很多种组合，这就是最简单的不可逆，所以只能通过<a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao">暴力破解</a>一个一个的试。</p><p>在计算过程中原文的部分信息是丢失了。一个MD5理论上是可以对应多个原文的，因为MD5是有限多个而原文是无限多个的。</p><h1 id="二、不可逆的MD5为什么是不安全的"><a href="#二、不可逆的MD5为什么是不安全的" class="headerlink" title="二、不可逆的MD5为什么是不安全的"></a>二、不可逆的MD5为什么是不安全的</h1><p>因为hash算法是固定的，所以同一个字符串计算出来的hash串是固定的，所以，可以采用如下的方式进行破解。</p><ol><li><strong>暴力枚举法：</strong>简单粗暴地枚举出所有原文，并计算出它们的哈希值，看看哪个哈希值和给定的信息摘要一致。</li><li><strong>字典法：</strong>黑客利用一个巨大的字典，存储尽可能多的原文和对应的哈希值。每次用给定的信息摘要查找字典，即可快速找到碰撞的结果。</li><li><strong>彩虹表（</strong>rainbow<strong>）法：</strong>在字典法的基础上改进，以时间换空间。是现在破解哈希常用的办法。</li></ol><p>对于单机来说，暴力枚举法的时间成本很高（以14位字母和数字的组合密码为例，共有1.24×10^25种可能，即使电脑每秒钟能进行10亿次运算，也需要4亿年才能破解），字典法的空间成本很高（仍以14位字母和数字的组合密码为例，生成的密码32位哈希串的对照表将占用5.7×10^14 TB的存储空间）。但是利用分布式计算和分布式存储，仍然可以有效破解MD5算法。因此这两种方法同样被黑客们广泛使用。</p><ul><li>2004年，王小云教授提出了非常高效的MD5碰撞方法。</li><li>2009年，冯登国、谢涛利用差分攻击，将MD5的碰撞算法复杂度进一步降低。</li></ul><h1 id="三、如何防御彩虹表的破解"><a href="#三、如何防御彩虹表的破解" class="headerlink" title="三、如何防御彩虹表的破解"></a>三、如何防御彩虹表的破解</h1><p>虽然彩虹表有着如此惊人的破解效率，但网站的安全人员仍然有办法防御彩虹表。最有效的方法就是“加盐”，即在密码的特定位置插入特定的字符串，这个特定字符串就是“盐（Salt）”，加盐后的密码经过哈希加密得到的哈希串与加盐前的哈希串完全不同，黑客用彩虹表得到的密码根本就不是真正的密码。即使黑客知道了“盐”的内容、加盐的位置，还需要对H函数和R函数进行修改，彩虹表也需要重新生成，因此加盐能大大增加利用彩虹表攻击的难度。</p><p>一个网站，如果加密算法和盐都泄露了，那针对性攻击依然是非常不安全的。因为同一个加密算法同一个盐加密后的字符串仍然还是一毛一样滴！</p><h1 id="四、一个更难破解的加密算法Bcrypt"><a href="#四、一个更难破解的加密算法Bcrypt" class="headerlink" title="四、一个更难破解的加密算法Bcrypt"></a>四、一个更难破解的加密算法Bcrypt</h1><p>Bcrypt是一种跨平台的文件加密工具。Bcrypt 使用的是布鲁斯·施内尔在1993年发布的 Blowfish 加密算法。由它加密的文件可在所有支持的操作系统和处理器上进行转移。它的口令必须是8至56个字符，并将在内部被转化为448位的密钥。</p><p>Bcrypt就是一款加密工具，可以比较方便地实现数据的加密工作。你也可以简单理解为它内部自己实现了随机加盐处理。使用Bcrypt，每次加密后的密文是不一样的。</p><p>对一个密码，Bcrypt每次生成的hash都不一样，那么它是如何进行校验的？</p><ol><li>虽然对同一个密码，每次生成的hash不一样，但是hash中包含了salt（hash产生过程：先随机生成salt，salt跟password进行hash）；</li><li>在下次校验时，从hash中取出salt，salt跟password进行hash；得到的结果跟保存在DB中的hash进行比对。</li></ol><p>BCrypt算法将salt随机并混入最终加密后的密码，验证时也无需单独提供之前的salt，从而无需单独处理salt问题。</p><p>salt随机部分代码：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-comment">//根据SecureRandom对象与gensalt()方法产生随机值</span>
+String salt = gensalt(xx, <span class="hljs-keyword">new</span> SecureRandom());
+String BCpwd = hashpw(<span class="hljs-string">&quot;123456&quot;</span>, salt);</code></pre></div><p>用法很简单：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-comment">//BCpwd是加密后的密文</span>
+String BCpwd = BCrypt.hashpw(password, BCrypt.gensalt());</code></pre></div><blockquote><p>加密后的格式一般为：</p><p>$2a$10$/bTVvqqlH9UiE0ZJZ7N2Me3RIgUCdgMheyTgV0B4cMCSokPa.6oCa</p><p>其中：$是分割符，无意义；2a是bcrypt加密版本号；10是cost的值；而后的前22位是salt值；再然后的字符串就是密码的密文了。</p></blockquote><p>这块代码的格式拼接可以查看gensalt()方法源码：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title">gensalt</span><span class="hljs-params">(<span class="hljs-keyword">int</span> log_rounds, SecureRandom random)</span> </span>&#123;
+	<span class="hljs-keyword">if</span> (log_rounds &lt; <span class="hljs-number">4</span> || log_rounds &gt; <span class="hljs-number">31</span>) &#123;
+		<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Bad number of rounds&quot;</span>);
+	&#125;
+	StringBuilder rs = <span class="hljs-keyword">new</span> StringBuilder();
+	<span class="hljs-keyword">byte</span> rnd[] = <span class="hljs-keyword">new</span> <span class="hljs-keyword">byte</span>[BCRYPT_SALT_LEN];
+ 
+	random.nextBytes(rnd);
+ 
+	rs.append(<span class="hljs-string">&quot;$2a$&quot;</span>);
+	<span class="hljs-keyword">if</span> (log_rounds &lt; <span class="hljs-number">10</span>) &#123;
+		rs.append(<span class="hljs-string">&quot;0&quot;</span>);
+	&#125;
+	rs.append(log_rounds);
+	rs.append(<span class="hljs-string">&quot;$&quot;</span>);
+	encode_base64(rnd, rnd.length, rs);
+	<span class="hljs-keyword">return</span> rs.toString();
+&#125;</code></pre></div><p>整理的一套BCrypt算法源码，可以很方便的直接拿来用：</p><div class="hljs"><pre><code class="hljs java"><span class="hljs-keyword">package</span> bcrypt;
+ 
+<span class="hljs-keyword">import</span> java.io.ByteArrayOutputStream;
+<span class="hljs-keyword">import</span> java.io.UnsupportedEncodingException;
+<span class="hljs-keyword">import</span> java.security.SecureRandom;
+<span class="hljs-keyword">import</span> java.util.regex.Pattern;
+ 
+<span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TestBCrypt</span> </span>&#123;
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> Pattern BCRYPT_PATTERN = Pattern
+			.compile(<span class="hljs-string">&quot;\\A\\$2a?\\$\\d\\d\\$[./0-9A-Za-z]&#123;53&#125;&quot;</span>);
+	
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> GENSALT_DEFAULT_LOG2_ROUNDS = <span class="hljs-number">10</span>;
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> BCRYPT_SALT_LEN = <span class="hljs-number">16</span>;
+	<span class="hljs-comment">// Blowfish parameters</span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> BLOWFISH_NUM_ROUNDS = <span class="hljs-number">16</span>;
+	<span class="hljs-comment">// Initial contents of key schedule</span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> P_orig[] = &#123; <span class="hljs-number">0x243f6a88</span>, <span class="hljs-number">0x85a308d3</span>, <span class="hljs-number">0x13198a2e</span>, <span class="hljs-number">0x03707344</span>,
+			<span class="hljs-number">0xa4093822</span>, <span class="hljs-number">0x299f31d0</span>, <span class="hljs-number">0x082efa98</span>, <span class="hljs-number">0xec4e6c89</span>, <span class="hljs-number">0x452821e6</span>, <span class="hljs-number">0x38d01377</span>,
+			<span class="hljs-number">0xbe5466cf</span>, <span class="hljs-number">0x34e90c6c</span>, <span class="hljs-number">0xc0ac29b7</span>, <span class="hljs-number">0xc97c50dd</span>, <span class="hljs-number">0x3f84d5b5</span>, <span class="hljs-number">0xb5470917</span>,
+			<span class="hljs-number">0x9216d5d9</span>, <span class="hljs-number">0x8979fb1b</span> &#125;;
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> S_orig[] = &#123; <span class="hljs-number">0xd1310ba6</span>, <span class="hljs-number">0x98dfb5ac</span>, <span class="hljs-number">0x2ffd72db</span>, <span class="hljs-number">0xd01adfb7</span>,
+			<span class="hljs-number">0xb8e1afed</span>, <span class="hljs-number">0x6a267e96</span>, <span class="hljs-number">0xba7c9045</span>, <span class="hljs-number">0xf12c7f99</span>, <span class="hljs-number">0x24a19947</span>, <span class="hljs-number">0xb3916cf7</span>,
+			<span class="hljs-number">0x0801f2e2</span>, <span class="hljs-number">0x858efc16</span>, <span class="hljs-number">0x636920d8</span>, <span class="hljs-number">0x71574e69</span>, <span class="hljs-number">0xa458fea3</span>, <span class="hljs-number">0xf4933d7e</span>,
+			<span class="hljs-number">0x0d95748f</span>, <span class="hljs-number">0x728eb658</span>, <span class="hljs-number">0x718bcd58</span>, <span class="hljs-number">0x82154aee</span>, <span class="hljs-number">0x7b54a41d</span>, <span class="hljs-number">0xc25a59b5</span>,
+			<span class="hljs-number">0x9c30d539</span>, <span class="hljs-number">0x2af26013</span>, <span class="hljs-number">0xc5d1b023</span>, <span class="hljs-number">0x286085f0</span>, <span class="hljs-number">0xca417918</span>, <span class="hljs-number">0xb8db38ef</span>,
+			<span class="hljs-number">0x8e79dcb0</span>, <span class="hljs-number">0x603a180e</span>, <span class="hljs-number">0x6c9e0e8b</span>, <span class="hljs-number">0xb01e8a3e</span>, <span class="hljs-number">0xd71577c1</span>, <span class="hljs-number">0xbd314b27</span>,
+			<span class="hljs-number">0x78af2fda</span>, <span class="hljs-number">0x55605c60</span>, <span class="hljs-number">0xe65525f3</span>, <span class="hljs-number">0xaa55ab94</span>, <span class="hljs-number">0x57489862</span>, <span class="hljs-number">0x63e81440</span>,
+			<span class="hljs-number">0x55ca396a</span>, <span class="hljs-number">0x2aab10b6</span>, <span class="hljs-number">0xb4cc5c34</span>, <span class="hljs-number">0x1141e8ce</span>, <span class="hljs-number">0xa15486af</span>, <span class="hljs-number">0x7c72e993</span>,
+			<span class="hljs-number">0xb3ee1411</span>, <span class="hljs-number">0x636fbc2a</span>, <span class="hljs-number">0x2ba9c55d</span>, <span class="hljs-number">0x741831f6</span>, <span class="hljs-number">0xce5c3e16</span>, <span class="hljs-number">0x9b87931e</span>,
+			<span class="hljs-number">0xafd6ba33</span>, <span class="hljs-number">0x6c24cf5c</span>, <span class="hljs-number">0x7a325381</span>, <span class="hljs-number">0x28958677</span>, <span class="hljs-number">0x3b8f4898</span>, <span class="hljs-number">0x6b4bb9af</span>,
+			<span class="hljs-number">0xc4bfe81b</span>, <span class="hljs-number">0x66282193</span>, <span class="hljs-number">0x61d809cc</span>, <span class="hljs-number">0xfb21a991</span>, <span class="hljs-number">0x487cac60</span>, <span class="hljs-number">0x5dec8032</span>,
+			<span class="hljs-number">0xef845d5d</span>, <span class="hljs-number">0xe98575b1</span>, <span class="hljs-number">0xdc262302</span>, <span class="hljs-number">0xeb651b88</span>, <span class="hljs-number">0x23893e81</span>, <span class="hljs-number">0xd396acc5</span>,
+			<span class="hljs-number">0x0f6d6ff3</span>, <span class="hljs-number">0x83f44239</span>, <span class="hljs-number">0x2e0b4482</span>, <span class="hljs-number">0xa4842004</span>, <span class="hljs-number">0x69c8f04a</span>, <span class="hljs-number">0x9e1f9b5e</span>,
+			<span class="hljs-number">0x21c66842</span>, <span class="hljs-number">0xf6e96c9a</span>, <span class="hljs-number">0x670c9c61</span>, <span class="hljs-number">0xabd388f0</span>, <span class="hljs-number">0x6a51a0d2</span>, <span class="hljs-number">0xd8542f68</span>,
+			<span class="hljs-number">0x960fa728</span>, <span class="hljs-number">0xab5133a3</span>, <span class="hljs-number">0x6eef0b6c</span>, <span class="hljs-number">0x137a3be4</span>, <span class="hljs-number">0xba3bf050</span>, <span class="hljs-number">0x7efb2a98</span>,
+			<span class="hljs-number">0xa1f1651d</span>, <span class="hljs-number">0x39af0176</span>, <span class="hljs-number">0x66ca593e</span>, <span class="hljs-number">0x82430e88</span>, <span class="hljs-number">0x8cee8619</span>, <span class="hljs-number">0x456f9fb4</span>,
+			<span class="hljs-number">0x7d84a5c3</span>, <span class="hljs-number">0x3b8b5ebe</span>, <span class="hljs-number">0xe06f75d8</span>, <span class="hljs-number">0x85c12073</span>, <span class="hljs-number">0x401a449f</span>, <span class="hljs-number">0x56c16aa6</span>,
+			<span class="hljs-number">0x4ed3aa62</span>, <span class="hljs-number">0x363f7706</span>, <span class="hljs-number">0x1bfedf72</span>, <span class="hljs-number">0x429b023d</span>, <span class="hljs-number">0x37d0d724</span>, <span class="hljs-number">0xd00a1248</span>,
+			<span class="hljs-number">0xdb0fead3</span>, <span class="hljs-number">0x49f1c09b</span>, <span class="hljs-number">0x075372c9</span>, <span class="hljs-number">0x80991b7b</span>, <span class="hljs-number">0x25d479d8</span>, <span class="hljs-number">0xf6e8def7</span>,
+			<span class="hljs-number">0xe3fe501a</span>, <span class="hljs-number">0xb6794c3b</span>, <span class="hljs-number">0x976ce0bd</span>, <span class="hljs-number">0x04c006ba</span>, <span class="hljs-number">0xc1a94fb6</span>, <span class="hljs-number">0x409f60c4</span>,
+			<span class="hljs-number">0x5e5c9ec2</span>, <span class="hljs-number">0x196a2463</span>, <span class="hljs-number">0x68fb6faf</span>, <span class="hljs-number">0x3e6c53b5</span>, <span class="hljs-number">0x1339b2eb</span>, <span class="hljs-number">0x3b52ec6f</span>,
+			<span class="hljs-number">0x6dfc511f</span>, <span class="hljs-number">0x9b30952c</span>, <span class="hljs-number">0xcc814544</span>, <span class="hljs-number">0xaf5ebd09</span>, <span class="hljs-number">0xbee3d004</span>, <span class="hljs-number">0xde334afd</span>,
+			<span class="hljs-number">0x660f2807</span>, <span class="hljs-number">0x192e4bb3</span>, <span class="hljs-number">0xc0cba857</span>, <span class="hljs-number">0x45c8740f</span>, <span class="hljs-number">0xd20b5f39</span>, <span class="hljs-number">0xb9d3fbdb</span>,
+			<span class="hljs-number">0x5579c0bd</span>, <span class="hljs-number">0x1a60320a</span>, <span class="hljs-number">0xd6a100c6</span>, <span class="hljs-number">0x402c7279</span>, <span class="hljs-number">0x679f25fe</span>, <span class="hljs-number">0xfb1fa3cc</span>,
+			<span class="hljs-number">0x8ea5e9f8</span>, <span class="hljs-number">0xdb3222f8</span>, <span class="hljs-number">0x3c7516df</span>, <span class="hljs-number">0xfd616b15</span>, <span class="hljs-number">0x2f501ec8</span>, <span class="hljs-number">0xad0552ab</span>,
+			<span class="hljs-number">0x323db5fa</span>, <span class="hljs-number">0xfd238760</span>, <span class="hljs-number">0x53317b48</span>, <span class="hljs-number">0x3e00df82</span>, <span class="hljs-number">0x9e5c57bb</span>, <span class="hljs-number">0xca6f8ca0</span>,
+			<span class="hljs-number">0x1a87562e</span>, <span class="hljs-number">0xdf1769db</span>, <span class="hljs-number">0xd542a8f6</span>, <span class="hljs-number">0x287effc3</span>, <span class="hljs-number">0xac6732c6</span>, <span class="hljs-number">0x8c4f5573</span>,
+			<span class="hljs-number">0x695b27b0</span>, <span class="hljs-number">0xbbca58c8</span>, <span class="hljs-number">0xe1ffa35d</span>, <span class="hljs-number">0xb8f011a0</span>, <span class="hljs-number">0x10fa3d98</span>, <span class="hljs-number">0xfd2183b8</span>,
+			<span class="hljs-number">0x4afcb56c</span>, <span class="hljs-number">0x2dd1d35b</span>, <span class="hljs-number">0x9a53e479</span>, <span class="hljs-number">0xb6f84565</span>, <span class="hljs-number">0xd28e49bc</span>, <span class="hljs-number">0x4bfb9790</span>,
+			<span class="hljs-number">0xe1ddf2da</span>, <span class="hljs-number">0xa4cb7e33</span>, <span class="hljs-number">0x62fb1341</span>, <span class="hljs-number">0xcee4c6e8</span>, <span class="hljs-number">0xef20cada</span>, <span class="hljs-number">0x36774c01</span>,
+			<span class="hljs-number">0xd07e9efe</span>, <span class="hljs-number">0x2bf11fb4</span>, <span class="hljs-number">0x95dbda4d</span>, <span class="hljs-number">0xae909198</span>, <span class="hljs-number">0xeaad8e71</span>, <span class="hljs-number">0x6b93d5a0</span>,
+			<span class="hljs-number">0xd08ed1d0</span>, <span class="hljs-number">0xafc725e0</span>, <span class="hljs-number">0x8e3c5b2f</span>, <span class="hljs-number">0x8e7594b7</span>, <span class="hljs-number">0x8ff6e2fb</span>, <span class="hljs-number">0xf2122b64</span>,
+			<span class="hljs-number">0x8888b812</span>, <span class="hljs-number">0x900df01c</span>, <span class="hljs-number">0x4fad5ea0</span>, <span class="hljs-number">0x688fc31c</span>, <span class="hljs-number">0xd1cff191</span>, <span class="hljs-number">0xb3a8c1ad</span>,
+			<span class="hljs-number">0x2f2f2218</span>, <span class="hljs-number">0xbe0e1777</span>, <span class="hljs-number">0xea752dfe</span>, <span class="hljs-number">0x8b021fa1</span>, <span class="hljs-number">0xe5a0cc0f</span>, <span class="hljs-number">0xb56f74e8</span>,
+			<span class="hljs-number">0x18acf3d6</span>, <span class="hljs-number">0xce89e299</span>, <span class="hljs-number">0xb4a84fe0</span>, <span class="hljs-number">0xfd13e0b7</span>, <span class="hljs-number">0x7cc43b81</span>, <span class="hljs-number">0xd2ada8d9</span>,
+			<span class="hljs-number">0x165fa266</span>, <span class="hljs-number">0x80957705</span>, <span class="hljs-number">0x93cc7314</span>, <span class="hljs-number">0x211a1477</span>, <span class="hljs-number">0xe6ad2065</span>, <span class="hljs-number">0x77b5fa86</span>,
+			<span class="hljs-number">0xc75442f5</span>, <span class="hljs-number">0xfb9d35cf</span>, <span class="hljs-number">0xebcdaf0c</span>, <span class="hljs-number">0x7b3e89a0</span>, <span class="hljs-number">0xd6411bd3</span>, <span class="hljs-number">0xae1e7e49</span>,
+			<span class="hljs-number">0x00250e2d</span>, <span class="hljs-number">0x2071b35e</span>, <span class="hljs-number">0x226800bb</span>, <span class="hljs-number">0x57b8e0af</span>, <span class="hljs-number">0x2464369b</span>, <span class="hljs-number">0xf009b91e</span>,
+			<span class="hljs-number">0x5563911d</span>, <span class="hljs-number">0x59dfa6aa</span>, <span class="hljs-number">0x78c14389</span>, <span class="hljs-number">0xd95a537f</span>, <span class="hljs-number">0x207d5ba2</span>, <span class="hljs-number">0x02e5b9c5</span>,
+			<span class="hljs-number">0x83260376</span>, <span class="hljs-number">0x6295cfa9</span>, <span class="hljs-number">0x11c81968</span>, <span class="hljs-number">0x4e734a41</span>, <span class="hljs-number">0xb3472dca</span>, <span class="hljs-number">0x7b14a94a</span>,
+			<span class="hljs-number">0x1b510052</span>, <span class="hljs-number">0x9a532915</span>, <span class="hljs-number">0xd60f573f</span>, <span class="hljs-number">0xbc9bc6e4</span>, <span class="hljs-number">0x2b60a476</span>, <span class="hljs-number">0x81e67400</span>,
+			<span class="hljs-number">0x08ba6fb5</span>, <span class="hljs-number">0x571be91f</span>, <span class="hljs-number">0xf296ec6b</span>, <span class="hljs-number">0x2a0dd915</span>, <span class="hljs-number">0xb6636521</span>, <span class="hljs-number">0xe7b9f9b6</span>,
+			<span class="hljs-number">0xff34052e</span>, <span class="hljs-number">0xc5855664</span>, <span class="hljs-number">0x53b02d5d</span>, <span class="hljs-number">0xa99f8fa1</span>, <span class="hljs-number">0x08ba4799</span>, <span class="hljs-number">0x6e85076a</span>,
+			<span class="hljs-number">0x4b7a70e9</span>, <span class="hljs-number">0xb5b32944</span>, <span class="hljs-number">0xdb75092e</span>, <span class="hljs-number">0xc4192623</span>, <span class="hljs-number">0xad6ea6b0</span>, <span class="hljs-number">0x49a7df7d</span>,
+			<span class="hljs-number">0x9cee60b8</span>, <span class="hljs-number">0x8fedb266</span>, <span class="hljs-number">0xecaa8c71</span>, <span class="hljs-number">0x699a17ff</span>, <span class="hljs-number">0x5664526c</span>, <span class="hljs-number">0xc2b19ee1</span>,
+			<span class="hljs-number">0x193602a5</span>, <span class="hljs-number">0x75094c29</span>, <span class="hljs-number">0xa0591340</span>, <span class="hljs-number">0xe4183a3e</span>, <span class="hljs-number">0x3f54989a</span>, <span class="hljs-number">0x5b429d65</span>,
+			<span class="hljs-number">0x6b8fe4d6</span>, <span class="hljs-number">0x99f73fd6</span>, <span class="hljs-number">0xa1d29c07</span>, <span class="hljs-number">0xefe830f5</span>, <span class="hljs-number">0x4d2d38e6</span>, <span class="hljs-number">0xf0255dc1</span>,
+			<span class="hljs-number">0x4cdd2086</span>, <span class="hljs-number">0x8470eb26</span>, <span class="hljs-number">0x6382e9c6</span>, <span class="hljs-number">0x021ecc5e</span>, <span class="hljs-number">0x09686b3f</span>, <span class="hljs-number">0x3ebaefc9</span>,
+			<span class="hljs-number">0x3c971814</span>, <span class="hljs-number">0x6b6a70a1</span>, <span class="hljs-number">0x687f3584</span>, <span class="hljs-number">0x52a0e286</span>, <span class="hljs-number">0xb79c5305</span>, <span class="hljs-number">0xaa500737</span>,
+			<span class="hljs-number">0x3e07841c</span>, <span class="hljs-number">0x7fdeae5c</span>, <span class="hljs-number">0x8e7d44ec</span>, <span class="hljs-number">0x5716f2b8</span>, <span class="hljs-number">0xb03ada37</span>, <span class="hljs-number">0xf0500c0d</span>,
+			<span class="hljs-number">0xf01c1f04</span>, <span class="hljs-number">0x0200b3ff</span>, <span class="hljs-number">0xae0cf51a</span>, <span class="hljs-number">0x3cb574b2</span>, <span class="hljs-number">0x25837a58</span>, <span class="hljs-number">0xdc0921bd</span>,
+			<span class="hljs-number">0xd19113f9</span>, <span class="hljs-number">0x7ca92ff6</span>, <span class="hljs-number">0x94324773</span>, <span class="hljs-number">0x22f54701</span>, <span class="hljs-number">0x3ae5e581</span>, <span class="hljs-number">0x37c2dadc</span>,
+			<span class="hljs-number">0xc8b57634</span>, <span class="hljs-number">0x9af3dda7</span>, <span class="hljs-number">0xa9446146</span>, <span class="hljs-number">0x0fd0030e</span>, <span class="hljs-number">0xecc8c73e</span>, <span class="hljs-number">0xa4751e41</span>,
+			<span class="hljs-number">0xe238cd99</span>, <span class="hljs-number">0x3bea0e2f</span>, <span class="hljs-number">0x3280bba1</span>, <span class="hljs-number">0x183eb331</span>, <span class="hljs-number">0x4e548b38</span>, <span class="hljs-number">0x4f6db908</span>,
+			<span class="hljs-number">0x6f420d03</span>, <span class="hljs-number">0xf60a04bf</span>, <span class="hljs-number">0x2cb81290</span>, <span class="hljs-number">0x24977c79</span>, <span class="hljs-number">0x5679b072</span>, <span class="hljs-number">0xbcaf89af</span>,
+			<span class="hljs-number">0xde9a771f</span>, <span class="hljs-number">0xd9930810</span>, <span class="hljs-number">0xb38bae12</span>, <span class="hljs-number">0xdccf3f2e</span>, <span class="hljs-number">0x5512721f</span>, <span class="hljs-number">0x2e6b7124</span>,
+			<span class="hljs-number">0x501adde6</span>, <span class="hljs-number">0x9f84cd87</span>, <span class="hljs-number">0x7a584718</span>, <span class="hljs-number">0x7408da17</span>, <span class="hljs-number">0xbc9f9abc</span>, <span class="hljs-number">0xe94b7d8c</span>,
+			<span class="hljs-number">0xec7aec3a</span>, <span class="hljs-number">0xdb851dfa</span>, <span class="hljs-number">0x63094366</span>, <span class="hljs-number">0xc464c3d2</span>, <span class="hljs-number">0xef1c1847</span>, <span class="hljs-number">0x3215d908</span>,
+			<span class="hljs-number">0xdd433b37</span>, <span class="hljs-number">0x24c2ba16</span>, <span class="hljs-number">0x12a14d43</span>, <span class="hljs-number">0x2a65c451</span>, <span class="hljs-number">0x50940002</span>, <span class="hljs-number">0x133ae4dd</span>,
+			<span class="hljs-number">0x71dff89e</span>, <span class="hljs-number">0x10314e55</span>, <span class="hljs-number">0x81ac77d6</span>, <span class="hljs-number">0x5f11199b</span>, <span class="hljs-number">0x043556f1</span>, <span class="hljs-number">0xd7a3c76b</span>,
+			<span class="hljs-number">0x3c11183b</span>, <span class="hljs-number">0x5924a509</span>, <span class="hljs-number">0xf28fe6ed</span>, <span class="hljs-number">0x97f1fbfa</span>, <span class="hljs-number">0x9ebabf2c</span>, <span class="hljs-number">0x1e153c6e</span>,
+			<span class="hljs-number">0x86e34570</span>, <span class="hljs-number">0xeae96fb1</span>, <span class="hljs-number">0x860e5e0a</span>, <span class="hljs-number">0x5a3e2ab3</span>, <span class="hljs-number">0x771fe71c</span>, <span class="hljs-number">0x4e3d06fa</span>,
+			<span class="hljs-number">0x2965dcb9</span>, <span class="hljs-number">0x99e71d0f</span>, <span class="hljs-number">0x803e89d6</span>, <span class="hljs-number">0x5266c825</span>, <span class="hljs-number">0x2e4cc978</span>, <span class="hljs-number">0x9c10b36a</span>,
+			<span class="hljs-number">0xc6150eba</span>, <span class="hljs-number">0x94e2ea78</span>, <span class="hljs-number">0xa5fc3c53</span>, <span class="hljs-number">0x1e0a2df4</span>, <span class="hljs-number">0xf2f74ea7</span>, <span class="hljs-number">0x361d2b3d</span>,
+			<span class="hljs-number">0x1939260f</span>, <span class="hljs-number">0x19c27960</span>, <span class="hljs-number">0x5223a708</span>, <span class="hljs-number">0xf71312b6</span>, <span class="hljs-number">0xebadfe6e</span>, <span class="hljs-number">0xeac31f66</span>,
+			<span class="hljs-number">0xe3bc4595</span>, <span class="hljs-number">0xa67bc883</span>, <span class="hljs-number">0xb17f37d1</span>, <span class="hljs-number">0x018cff28</span>, <span class="hljs-number">0xc332ddef</span>, <span class="hljs-number">0xbe6c5aa5</span>,
+			<span class="hljs-number">0x65582185</span>, <span class="hljs-number">0x68ab9802</span>, <span class="hljs-number">0xeecea50f</span>, <span class="hljs-number">0xdb2f953b</span>, <span class="hljs-number">0x2aef7dad</span>, <span class="hljs-number">0x5b6e2f84</span>,
+			<span class="hljs-number">0x1521b628</span>, <span class="hljs-number">0x29076170</span>, <span class="hljs-number">0xecdd4775</span>, <span class="hljs-number">0x619f1510</span>, <span class="hljs-number">0x13cca830</span>, <span class="hljs-number">0xeb61bd96</span>,
+			<span class="hljs-number">0x0334fe1e</span>, <span class="hljs-number">0xaa0363cf</span>, <span class="hljs-number">0xb5735c90</span>, <span class="hljs-number">0x4c70a239</span>, <span class="hljs-number">0xd59e9e0b</span>, <span class="hljs-number">0xcbaade14</span>,
+			<span class="hljs-number">0xeecc86bc</span>, <span class="hljs-number">0x60622ca7</span>, <span class="hljs-number">0x9cab5cab</span>, <span class="hljs-number">0xb2f3846e</span>, <span class="hljs-number">0x648b1eaf</span>, <span class="hljs-number">0x19bdf0ca</span>,
+			<span class="hljs-number">0xa02369b9</span>, <span class="hljs-number">0x655abb50</span>, <span class="hljs-number">0x40685a32</span>, <span class="hljs-number">0x3c2ab4b3</span>, <span class="hljs-number">0x319ee9d5</span>, <span class="hljs-number">0xc021b8f7</span>,
+			<span class="hljs-number">0x9b540b19</span>, <span class="hljs-number">0x875fa099</span>, <span class="hljs-number">0x95f7997e</span>, <span class="hljs-number">0x623d7da8</span>, <span class="hljs-number">0xf837889a</span>, <span class="hljs-number">0x97e32d77</span>,
+			<span class="hljs-number">0x11ed935f</span>, <span class="hljs-number">0x16681281</span>, <span class="hljs-number">0x0e358829</span>, <span class="hljs-number">0xc7e61fd6</span>, <span class="hljs-number">0x96dedfa1</span>, <span class="hljs-number">0x7858ba99</span>,
+			<span class="hljs-number">0x57f584a5</span>, <span class="hljs-number">0x1b227263</span>, <span class="hljs-number">0x9b83c3ff</span>, <span class="hljs-number">0x1ac24696</span>, <span class="hljs-number">0xcdb30aeb</span>, <span class="hljs-number">0x532e3054</span>,
+			<span class="hljs-number">0x8fd948e4</span>, <span class="hljs-number">0x6dbc3128</span>, <span class="hljs-number">0x58ebf2ef</span>, <span class="hljs-number">0x34c6ffea</span>, <span class="hljs-number">0xfe28ed61</span>, <span class="hljs-number">0xee7c3c73</span>,
+			<span class="hljs-number">0x5d4a14d9</span>, <span class="hljs-number">0xe864b7e3</span>, <span class="hljs-number">0x42105d14</span>, <span class="hljs-number">0x203e13e0</span>, <span class="hljs-number">0x45eee2b6</span>, <span class="hljs-number">0xa3aaabea</span>,
+			<span class="hljs-number">0xdb6c4f15</span>, <span class="hljs-number">0xfacb4fd0</span>, <span class="hljs-number">0xc742f442</span>, <span class="hljs-number">0xef6abbb5</span>, <span class="hljs-number">0x654f3b1d</span>, <span class="hljs-number">0x41cd2105</span>,
+			<span class="hljs-number">0xd81e799e</span>, <span class="hljs-number">0x86854dc7</span>, <span class="hljs-number">0xe44b476a</span>, <span class="hljs-number">0x3d816250</span>, <span class="hljs-number">0xcf62a1f2</span>, <span class="hljs-number">0x5b8d2646</span>,
+			<span class="hljs-number">0xfc8883a0</span>, <span class="hljs-number">0xc1c7b6a3</span>, <span class="hljs-number">0x7f1524c3</span>, <span class="hljs-number">0x69cb7492</span>, <span class="hljs-number">0x47848a0b</span>, <span class="hljs-number">0x5692b285</span>,
+			<span class="hljs-number">0x095bbf00</span>, <span class="hljs-number">0xad19489d</span>, <span class="hljs-number">0x1462b174</span>, <span class="hljs-number">0x23820e00</span>, <span class="hljs-number">0x58428d2a</span>, <span class="hljs-number">0x0c55f5ea</span>,
+			<span class="hljs-number">0x1dadf43e</span>, <span class="hljs-number">0x233f7061</span>, <span class="hljs-number">0x3372f092</span>, <span class="hljs-number">0x8d937e41</span>, <span class="hljs-number">0xd65fecf1</span>, <span class="hljs-number">0x6c223bdb</span>,
+			<span class="hljs-number">0x7cde3759</span>, <span class="hljs-number">0xcbee7460</span>, <span class="hljs-number">0x4085f2a7</span>, <span class="hljs-number">0xce77326e</span>, <span class="hljs-number">0xa6078084</span>, <span class="hljs-number">0x19f8509e</span>,
+			<span class="hljs-number">0xe8efd855</span>, <span class="hljs-number">0x61d99735</span>, <span class="hljs-number">0xa969a7aa</span>, <span class="hljs-number">0xc50c06c2</span>, <span class="hljs-number">0x5a04abfc</span>, <span class="hljs-number">0x800bcadc</span>,
+			<span class="hljs-number">0x9e447a2e</span>, <span class="hljs-number">0xc3453484</span>, <span class="hljs-number">0xfdd56705</span>, <span class="hljs-number">0x0e1e9ec9</span>, <span class="hljs-number">0xdb73dbd3</span>, <span class="hljs-number">0x105588cd</span>,
+			<span class="hljs-number">0x675fda79</span>, <span class="hljs-number">0xe3674340</span>, <span class="hljs-number">0xc5c43465</span>, <span class="hljs-number">0x713e38d8</span>, <span class="hljs-number">0x3d28f89e</span>, <span class="hljs-number">0xf16dff20</span>,
+			<span class="hljs-number">0x153e21e7</span>, <span class="hljs-number">0x8fb03d4a</span>, <span class="hljs-number">0xe6e39f2b</span>, <span class="hljs-number">0xdb83adf7</span>, <span class="hljs-number">0xe93d5a68</span>, <span class="hljs-number">0x948140f7</span>,
+			<span class="hljs-number">0xf64c261c</span>, <span class="hljs-number">0x94692934</span>, <span class="hljs-number">0x411520f7</span>, <span class="hljs-number">0x7602d4f7</span>, <span class="hljs-number">0xbcf46b2e</span>, <span class="hljs-number">0xd4a20068</span>,
+			<span class="hljs-number">0xd4082471</span>, <span class="hljs-number">0x3320f46a</span>, <span class="hljs-number">0x43b7d4b7</span>, <span class="hljs-number">0x500061af</span>, <span class="hljs-number">0x1e39f62e</span>, <span class="hljs-number">0x97244546</span>,
+			<span class="hljs-number">0x14214f74</span>, <span class="hljs-number">0xbf8b8840</span>, <span class="hljs-number">0x4d95fc1d</span>, <span class="hljs-number">0x96b591af</span>, <span class="hljs-number">0x70f4ddd3</span>, <span class="hljs-number">0x66a02f45</span>,
+			<span class="hljs-number">0xbfbc09ec</span>, <span class="hljs-number">0x03bd9785</span>, <span class="hljs-number">0x7fac6dd0</span>, <span class="hljs-number">0x31cb8504</span>, <span class="hljs-number">0x96eb27b3</span>, <span class="hljs-number">0x55fd3941</span>,
+			<span class="hljs-number">0xda2547e6</span>, <span class="hljs-number">0xabca0a9a</span>, <span class="hljs-number">0x28507825</span>, <span class="hljs-number">0x530429f4</span>, <span class="hljs-number">0x0a2c86da</span>, <span class="hljs-number">0xe9b66dfb</span>,
+			<span class="hljs-number">0x68dc1462</span>, <span class="hljs-number">0xd7486900</span>, <span class="hljs-number">0x680ec0a4</span>, <span class="hljs-number">0x27a18dee</span>, <span class="hljs-number">0x4f3ffea2</span>, <span class="hljs-number">0xe887ad8c</span>,
+			<span class="hljs-number">0xb58ce006</span>, <span class="hljs-number">0x7af4d6b6</span>, <span class="hljs-number">0xaace1e7c</span>, <span class="hljs-number">0xd3375fec</span>, <span class="hljs-number">0xce78a399</span>, <span class="hljs-number">0x406b2a42</span>,
+			<span class="hljs-number">0x20fe9e35</span>, <span class="hljs-number">0xd9f385b9</span>, <span class="hljs-number">0xee39d7ab</span>, <span class="hljs-number">0x3b124e8b</span>, <span class="hljs-number">0x1dc9faf7</span>, <span class="hljs-number">0x4b6d1856</span>,
+			<span class="hljs-number">0x26a36631</span>, <span class="hljs-number">0xeae397b2</span>, <span class="hljs-number">0x3a6efa74</span>, <span class="hljs-number">0xdd5b4332</span>, <span class="hljs-number">0x6841e7f7</span>, <span class="hljs-number">0xca7820fb</span>,
+			<span class="hljs-number">0xfb0af54e</span>, <span class="hljs-number">0xd8feb397</span>, <span class="hljs-number">0x454056ac</span>, <span class="hljs-number">0xba489527</span>, <span class="hljs-number">0x55533a3a</span>, <span class="hljs-number">0x20838d87</span>,
+			<span class="hljs-number">0xfe6ba9b7</span>, <span class="hljs-number">0xd096954b</span>, <span class="hljs-number">0x55a867bc</span>, <span class="hljs-number">0xa1159a58</span>, <span class="hljs-number">0xcca92963</span>, <span class="hljs-number">0x99e1db33</span>,
+			<span class="hljs-number">0xa62a4a56</span>, <span class="hljs-number">0x3f3125f9</span>, <span class="hljs-number">0x5ef47e1c</span>, <span class="hljs-number">0x9029317c</span>, <span class="hljs-number">0xfdf8e802</span>, <span class="hljs-number">0x04272f70</span>,
+			<span class="hljs-number">0x80bb155c</span>, <span class="hljs-number">0x05282ce3</span>, <span class="hljs-number">0x95c11548</span>, <span class="hljs-number">0xe4c66d22</span>, <span class="hljs-number">0x48c1133f</span>, <span class="hljs-number">0xc70f86dc</span>,
+			<span class="hljs-number">0x07f9c9ee</span>, <span class="hljs-number">0x41041f0f</span>, <span class="hljs-number">0x404779a4</span>, <span class="hljs-number">0x5d886e17</span>, <span class="hljs-number">0x325f51eb</span>, <span class="hljs-number">0xd59bc0d1</span>,
+			<span class="hljs-number">0xf2bcc18f</span>, <span class="hljs-number">0x41113564</span>, <span class="hljs-number">0x257b7834</span>, <span class="hljs-number">0x602a9c60</span>, <span class="hljs-number">0xdff8e8a3</span>, <span class="hljs-number">0x1f636c1b</span>,
+			<span class="hljs-number">0x0e12b4c2</span>, <span class="hljs-number">0x02e1329e</span>, <span class="hljs-number">0xaf664fd1</span>, <span class="hljs-number">0xcad18115</span>, <span class="hljs-number">0x6b2395e0</span>, <span class="hljs-number">0x333e92e1</span>,
+			<span class="hljs-number">0x3b240b62</span>, <span class="hljs-number">0xeebeb922</span>, <span class="hljs-number">0x85b2a20e</span>, <span class="hljs-number">0xe6ba0d99</span>, <span class="hljs-number">0xde720c8c</span>, <span class="hljs-number">0x2da2f728</span>,
+			<span class="hljs-number">0xd0127845</span>, <span class="hljs-number">0x95b794fd</span>, <span class="hljs-number">0x647d0862</span>, <span class="hljs-number">0xe7ccf5f0</span>, <span class="hljs-number">0x5449a36f</span>, <span class="hljs-number">0x877d48fa</span>,
+			<span class="hljs-number">0xc39dfd27</span>, <span class="hljs-number">0xf33e8d1e</span>, <span class="hljs-number">0x0a476341</span>, <span class="hljs-number">0x992eff74</span>, <span class="hljs-number">0x3a6f6eab</span>, <span class="hljs-number">0xf4f8fd37</span>,
+			<span class="hljs-number">0xa812dc60</span>, <span class="hljs-number">0xa1ebddf8</span>, <span class="hljs-number">0x991be14c</span>, <span class="hljs-number">0xdb6e6b0d</span>, <span class="hljs-number">0xc67b5510</span>, <span class="hljs-number">0x6d672c37</span>,
+			<span class="hljs-number">0x2765d43b</span>, <span class="hljs-number">0xdcd0e804</span>, <span class="hljs-number">0xf1290dc7</span>, <span class="hljs-number">0xcc00ffa3</span>, <span class="hljs-number">0xb5390f92</span>, <span class="hljs-number">0x690fed0b</span>,
+			<span class="hljs-number">0x667b9ffb</span>, <span class="hljs-number">0xcedb7d9c</span>, <span class="hljs-number">0xa091cf0b</span>, <span class="hljs-number">0xd9155ea3</span>, <span class="hljs-number">0xbb132f88</span>, <span class="hljs-number">0x515bad24</span>,
+			<span class="hljs-number">0x7b9479bf</span>, <span class="hljs-number">0x763bd6eb</span>, <span class="hljs-number">0x37392eb3</span>, <span class="hljs-number">0xcc115979</span>, <span class="hljs-number">0x8026e297</span>, <span class="hljs-number">0xf42e312d</span>,
+			<span class="hljs-number">0x6842ada7</span>, <span class="hljs-number">0xc66a2b3b</span>, <span class="hljs-number">0x12754ccc</span>, <span class="hljs-number">0x782ef11c</span>, <span class="hljs-number">0x6a124237</span>, <span class="hljs-number">0xb79251e7</span>,
+			<span class="hljs-number">0x06a1bbe6</span>, <span class="hljs-number">0x4bfb6350</span>, <span class="hljs-number">0x1a6b1018</span>, <span class="hljs-number">0x11caedfa</span>, <span class="hljs-number">0x3d25bdd8</span>, <span class="hljs-number">0xe2e1c3c9</span>,
+			<span class="hljs-number">0x44421659</span>, <span class="hljs-number">0x0a121386</span>, <span class="hljs-number">0xd90cec6e</span>, <span class="hljs-number">0xd5abea2a</span>, <span class="hljs-number">0x64af674e</span>, <span class="hljs-number">0xda86a85f</span>,
+			<span class="hljs-number">0xbebfe988</span>, <span class="hljs-number">0x64e4c3fe</span>, <span class="hljs-number">0x9dbc8057</span>, <span class="hljs-number">0xf0f7c086</span>, <span class="hljs-number">0x60787bf8</span>, <span class="hljs-number">0x6003604d</span>,
+			<span class="hljs-number">0xd1fd8346</span>, <span class="hljs-number">0xf6381fb0</span>, <span class="hljs-number">0x7745ae04</span>, <span class="hljs-number">0xd736fccc</span>, <span class="hljs-number">0x83426b33</span>, <span class="hljs-number">0xf01eab71</span>,
+			<span class="hljs-number">0xb0804187</span>, <span class="hljs-number">0x3c005e5f</span>, <span class="hljs-number">0x77a057be</span>, <span class="hljs-number">0xbde8ae24</span>, <span class="hljs-number">0x55464299</span>, <span class="hljs-number">0xbf582e61</span>,
+			<span class="hljs-number">0x4e58f48f</span>, <span class="hljs-number">0xf2ddfda2</span>, <span class="hljs-number">0xf474ef38</span>, <span class="hljs-number">0x8789bdc2</span>, <span class="hljs-number">0x5366f9c3</span>, <span class="hljs-number">0xc8b38e74</span>,
+			<span class="hljs-number">0xb475f255</span>, <span class="hljs-number">0x46fcd9b9</span>, <span class="hljs-number">0x7aeb2661</span>, <span class="hljs-number">0x8b1ddf84</span>, <span class="hljs-number">0x846a0e79</span>, <span class="hljs-number">0x915f95e2</span>,
+			<span class="hljs-number">0x466e598e</span>, <span class="hljs-number">0x20b45770</span>, <span class="hljs-number">0x8cd55591</span>, <span class="hljs-number">0xc902de4c</span>, <span class="hljs-number">0xb90bace1</span>, <span class="hljs-number">0xbb8205d0</span>,
+			<span class="hljs-number">0x11a86248</span>, <span class="hljs-number">0x7574a99e</span>, <span class="hljs-number">0xb77f19b6</span>, <span class="hljs-number">0xe0a9dc09</span>, <span class="hljs-number">0x662d09a1</span>, <span class="hljs-number">0xc4324633</span>,
+			<span class="hljs-number">0xe85a1f02</span>, <span class="hljs-number">0x09f0be8c</span>, <span class="hljs-number">0x4a99a025</span>, <span class="hljs-number">0x1d6efe10</span>, <span class="hljs-number">0x1ab93d1d</span>, <span class="hljs-number">0x0ba5a4df</span>,
+			<span class="hljs-number">0xa186f20f</span>, <span class="hljs-number">0x2868f169</span>, <span class="hljs-number">0xdcb7da83</span>, <span class="hljs-number">0x573906fe</span>, <span class="hljs-number">0xa1e2ce9b</span>, <span class="hljs-number">0x4fcd7f52</span>,
+			<span class="hljs-number">0x50115e01</span>, <span class="hljs-number">0xa70683fa</span>, <span class="hljs-number">0xa002b5c4</span>, <span class="hljs-number">0x0de6d027</span>, <span class="hljs-number">0x9af88c27</span>, <span class="hljs-number">0x773f8641</span>,
+			<span class="hljs-number">0xc3604c06</span>, <span class="hljs-number">0x61a806b5</span>, <span class="hljs-number">0xf0177a28</span>, <span class="hljs-number">0xc0f586e0</span>, <span class="hljs-number">0x006058aa</span>, <span class="hljs-number">0x30dc7d62</span>,
+			<span class="hljs-number">0x11e69ed7</span>, <span class="hljs-number">0x2338ea63</span>, <span class="hljs-number">0x53c2dd94</span>, <span class="hljs-number">0xc2c21634</span>, <span class="hljs-number">0xbbcbee56</span>, <span class="hljs-number">0x90bcb6de</span>,
+			<span class="hljs-number">0xebfc7da1</span>, <span class="hljs-number">0xce591d76</span>, <span class="hljs-number">0x6f05e409</span>, <span class="hljs-number">0x4b7c0188</span>, <span class="hljs-number">0x39720a3d</span>, <span class="hljs-number">0x7c927c24</span>,
+			<span class="hljs-number">0x86e3725f</span>, <span class="hljs-number">0x724d9db9</span>, <span class="hljs-number">0x1ac15bb4</span>, <span class="hljs-number">0xd39eb8fc</span>, <span class="hljs-number">0xed545578</span>, <span class="hljs-number">0x08fca5b5</span>,
+			<span class="hljs-number">0xd83d7cd3</span>, <span class="hljs-number">0x4dad0fc4</span>, <span class="hljs-number">0x1e50ef5e</span>, <span class="hljs-number">0xb161e6f8</span>, <span class="hljs-number">0xa28514d9</span>, <span class="hljs-number">0x6c51133c</span>,
+			<span class="hljs-number">0x6fd5c7e7</span>, <span class="hljs-number">0x56e14ec4</span>, <span class="hljs-number">0x362abfce</span>, <span class="hljs-number">0xddc6c837</span>, <span class="hljs-number">0xd79a3234</span>, <span class="hljs-number">0x92638212</span>,
+			<span class="hljs-number">0x670efa8e</span>, <span class="hljs-number">0x406000e0</span>, <span class="hljs-number">0x3a39ce37</span>, <span class="hljs-number">0xd3faf5cf</span>, <span class="hljs-number">0xabc27737</span>, <span class="hljs-number">0x5ac52d1b</span>,
+			<span class="hljs-number">0x5cb0679e</span>, <span class="hljs-number">0x4fa33742</span>, <span class="hljs-number">0xd3822740</span>, <span class="hljs-number">0x99bc9bbe</span>, <span class="hljs-number">0xd5118e9d</span>, <span class="hljs-number">0xbf0f7315</span>,
+			<span class="hljs-number">0xd62d1c7e</span>, <span class="hljs-number">0xc700c47b</span>, <span class="hljs-number">0xb78c1b6b</span>, <span class="hljs-number">0x21a19045</span>, <span class="hljs-number">0xb26eb1be</span>, <span class="hljs-number">0x6a366eb4</span>,
+			<span class="hljs-number">0x5748ab2f</span>, <span class="hljs-number">0xbc946e79</span>, <span class="hljs-number">0xc6a376d2</span>, <span class="hljs-number">0x6549c2c8</span>, <span class="hljs-number">0x530ff8ee</span>, <span class="hljs-number">0x468dde7d</span>,
+			<span class="hljs-number">0xd5730a1d</span>, <span class="hljs-number">0x4cd04dc6</span>, <span class="hljs-number">0x2939bbdb</span>, <span class="hljs-number">0xa9ba4650</span>, <span class="hljs-number">0xac9526e8</span>, <span class="hljs-number">0xbe5ee304</span>,
+			<span class="hljs-number">0xa1fad5f0</span>, <span class="hljs-number">0x6a2d519a</span>, <span class="hljs-number">0x63ef8ce2</span>, <span class="hljs-number">0x9a86ee22</span>, <span class="hljs-number">0xc089c2b8</span>, <span class="hljs-number">0x43242ef6</span>,
+			<span class="hljs-number">0xa51e03aa</span>, <span class="hljs-number">0x9cf2d0a4</span>, <span class="hljs-number">0x83c061ba</span>, <span class="hljs-number">0x9be96a4d</span>, <span class="hljs-number">0x8fe51550</span>, <span class="hljs-number">0xba645bd6</span>,
+			<span class="hljs-number">0x2826a2f9</span>, <span class="hljs-number">0xa73a3ae1</span>, <span class="hljs-number">0x4ba99586</span>, <span class="hljs-number">0xef5562e9</span>, <span class="hljs-number">0xc72fefd3</span>, <span class="hljs-number">0xf752f7da</span>,
+			<span class="hljs-number">0x3f046f69</span>, <span class="hljs-number">0x77fa0a59</span>, <span class="hljs-number">0x80e4a915</span>, <span class="hljs-number">0x87b08601</span>, <span class="hljs-number">0x9b09e6ad</span>, <span class="hljs-number">0x3b3ee593</span>,
+			<span class="hljs-number">0xe990fd5a</span>, <span class="hljs-number">0x9e34d797</span>, <span class="hljs-number">0x2cf0b7d9</span>, <span class="hljs-number">0x022b8b51</span>, <span class="hljs-number">0x96d5ac3a</span>, <span class="hljs-number">0x017da67d</span>,
+			<span class="hljs-number">0xd1cf3ed6</span>, <span class="hljs-number">0x7c7d2d28</span>, <span class="hljs-number">0x1f9f25cf</span>, <span class="hljs-number">0xadf2b89b</span>, <span class="hljs-number">0x5ad6b472</span>, <span class="hljs-number">0x5a88f54c</span>,
+			<span class="hljs-number">0xe029ac71</span>, <span class="hljs-number">0xe019a5e6</span>, <span class="hljs-number">0x47b0acfd</span>, <span class="hljs-number">0xed93fa9b</span>, <span class="hljs-number">0xe8d3c48d</span>, <span class="hljs-number">0x283b57cc</span>,
+			<span class="hljs-number">0xf8d56629</span>, <span class="hljs-number">0x79132e28</span>, <span class="hljs-number">0x785f0191</span>, <span class="hljs-number">0xed756055</span>, <span class="hljs-number">0xf7960e44</span>, <span class="hljs-number">0xe3d35e8c</span>,
+			<span class="hljs-number">0x15056dd4</span>, <span class="hljs-number">0x88f46dba</span>, <span class="hljs-number">0x03a16125</span>, <span class="hljs-number">0x0564f0bd</span>, <span class="hljs-number">0xc3eb9e15</span>, <span class="hljs-number">0x3c9057a2</span>,
+			<span class="hljs-number">0x97271aec</span>, <span class="hljs-number">0xa93a072a</span>, <span class="hljs-number">0x1b3f6d9b</span>, <span class="hljs-number">0x1e6321f5</span>, <span class="hljs-number">0xf59c66fb</span>, <span class="hljs-number">0x26dcf319</span>,
+			<span class="hljs-number">0x7533d928</span>, <span class="hljs-number">0xb155fdf5</span>, <span class="hljs-number">0x03563482</span>, <span class="hljs-number">0x8aba3cbb</span>, <span class="hljs-number">0x28517711</span>, <span class="hljs-number">0xc20ad9f8</span>,
+			<span class="hljs-number">0xabcc5167</span>, <span class="hljs-number">0xccad925f</span>, <span class="hljs-number">0x4de81751</span>, <span class="hljs-number">0x3830dc8e</span>, <span class="hljs-number">0x379d5862</span>, <span class="hljs-number">0x9320f991</span>,
+			<span class="hljs-number">0xea7a90c2</span>, <span class="hljs-number">0xfb3e7bce</span>, <span class="hljs-number">0x5121ce64</span>, <span class="hljs-number">0x774fbe32</span>, <span class="hljs-number">0xa8b6e37e</span>, <span class="hljs-number">0xc3293d46</span>,
+			<span class="hljs-number">0x48de5369</span>, <span class="hljs-number">0x6413e680</span>, <span class="hljs-number">0xa2ae0810</span>, <span class="hljs-number">0xdd6db224</span>, <span class="hljs-number">0x69852dfd</span>, <span class="hljs-number">0x09072166</span>,
+			<span class="hljs-number">0xb39a460a</span>, <span class="hljs-number">0x6445c0dd</span>, <span class="hljs-number">0x586cdecf</span>, <span class="hljs-number">0x1c20c8ae</span>, <span class="hljs-number">0x5bbef7dd</span>, <span class="hljs-number">0x1b588d40</span>,
+			<span class="hljs-number">0xccd2017f</span>, <span class="hljs-number">0x6bb4e3bb</span>, <span class="hljs-number">0xdda26a7e</span>, <span class="hljs-number">0x3a59ff45</span>, <span class="hljs-number">0x3e350a44</span>, <span class="hljs-number">0xbcb4cdd5</span>,
+			<span class="hljs-number">0x72eacea8</span>, <span class="hljs-number">0xfa6484bb</span>, <span class="hljs-number">0x8d6612ae</span>, <span class="hljs-number">0xbf3c6f47</span>, <span class="hljs-number">0xd29be463</span>, <span class="hljs-number">0x542f5d9e</span>,
+			<span class="hljs-number">0xaec2771b</span>, <span class="hljs-number">0xf64e6370</span>, <span class="hljs-number">0x740e0d8d</span>, <span class="hljs-number">0xe75b1357</span>, <span class="hljs-number">0xf8721671</span>, <span class="hljs-number">0xaf537d5d</span>,
+			<span class="hljs-number">0x4040cb08</span>, <span class="hljs-number">0x4eb4e2cc</span>, <span class="hljs-number">0x34d2466a</span>, <span class="hljs-number">0x0115af84</span>, <span class="hljs-number">0xe1b00428</span>, <span class="hljs-number">0x95983a1d</span>,
+			<span class="hljs-number">0x06b89fb4</span>, <span class="hljs-number">0xce6ea048</span>, <span class="hljs-number">0x6f3f3b82</span>, <span class="hljs-number">0x3520ab82</span>, <span class="hljs-number">0x011a1d4b</span>, <span class="hljs-number">0x277227f8</span>,
+			<span class="hljs-number">0x611560b1</span>, <span class="hljs-number">0xe7933fdc</span>, <span class="hljs-number">0xbb3a792b</span>, <span class="hljs-number">0x344525bd</span>, <span class="hljs-number">0xa08839e1</span>, <span class="hljs-number">0x51ce794b</span>,
+			<span class="hljs-number">0x2f32c9b7</span>, <span class="hljs-number">0xa01fbac9</span>, <span class="hljs-number">0xe01cc87e</span>, <span class="hljs-number">0xbcc7d1f6</span>, <span class="hljs-number">0xcf0111c3</span>, <span class="hljs-number">0xa1e8aac7</span>,
+			<span class="hljs-number">0x1a908749</span>, <span class="hljs-number">0xd44fbd9a</span>, <span class="hljs-number">0xd0dadecb</span>, <span class="hljs-number">0xd50ada38</span>, <span class="hljs-number">0x0339c32a</span>, <span class="hljs-number">0xc6913667</span>,
+			<span class="hljs-number">0x8df9317c</span>, <span class="hljs-number">0xe0b12b4f</span>, <span class="hljs-number">0xf79e59b7</span>, <span class="hljs-number">0x43f5bb3a</span>, <span class="hljs-number">0xf2d519ff</span>, <span class="hljs-number">0x27d9459c</span>,
+			<span class="hljs-number">0xbf97222c</span>, <span class="hljs-number">0x15e6fc2a</span>, <span class="hljs-number">0x0f91fc71</span>, <span class="hljs-number">0x9b941525</span>, <span class="hljs-number">0xfae59361</span>, <span class="hljs-number">0xceb69ceb</span>,
+			<span class="hljs-number">0xc2a86459</span>, <span class="hljs-number">0x12baa8d1</span>, <span class="hljs-number">0xb6c1075e</span>, <span class="hljs-number">0xe3056a0c</span>, <span class="hljs-number">0x10d25065</span>, <span class="hljs-number">0xcb03a442</span>,
+			<span class="hljs-number">0xe0ec6e0e</span>, <span class="hljs-number">0x1698db3b</span>, <span class="hljs-number">0x4c98a0be</span>, <span class="hljs-number">0x3278e964</span>, <span class="hljs-number">0x9f1f9532</span>, <span class="hljs-number">0xe0d392df</span>,
+			<span class="hljs-number">0xd3a0342b</span>, <span class="hljs-number">0x8971f21e</span>, <span class="hljs-number">0x1b0a7441</span>, <span class="hljs-number">0x4ba3348c</span>, <span class="hljs-number">0xc5be7120</span>, <span class="hljs-number">0xc37632d8</span>,
+			<span class="hljs-number">0xdf359f8d</span>, <span class="hljs-number">0x9b992f2e</span>, <span class="hljs-number">0xe60b6f47</span>, <span class="hljs-number">0x0fe3f11d</span>, <span class="hljs-number">0xe54cda54</span>, <span class="hljs-number">0x1edad891</span>,
+			<span class="hljs-number">0xce6279cf</span>, <span class="hljs-number">0xcd3e7e6f</span>, <span class="hljs-number">0x1618b166</span>, <span class="hljs-number">0xfd2c1d05</span>, <span class="hljs-number">0x848fd2c5</span>, <span class="hljs-number">0xf6fb2299</span>,
+			<span class="hljs-number">0xf523f357</span>, <span class="hljs-number">0xa6327623</span>, <span class="hljs-number">0x93a83531</span>, <span class="hljs-number">0x56cccd02</span>, <span class="hljs-number">0xacf08162</span>, <span class="hljs-number">0x5a75ebb5</span>,
+			<span class="hljs-number">0x6e163697</span>, <span class="hljs-number">0x88d273cc</span>, <span class="hljs-number">0xde966292</span>, <span class="hljs-number">0x81b949d0</span>, <span class="hljs-number">0x4c50901b</span>, <span class="hljs-number">0x71c65614</span>,
+			<span class="hljs-number">0xe6c6c7bd</span>, <span class="hljs-number">0x327a140a</span>, <span class="hljs-number">0x45e1d006</span>, <span class="hljs-number">0xc3f27b9a</span>, <span class="hljs-number">0xc9aa53fd</span>, <span class="hljs-number">0x62a80f00</span>,
+			<span class="hljs-number">0xbb25bfe2</span>, <span class="hljs-number">0x35bdd2f6</span>, <span class="hljs-number">0x71126905</span>, <span class="hljs-number">0xb2040222</span>, <span class="hljs-number">0xb6cbcf7c</span>, <span class="hljs-number">0xcd769c2b</span>,
+			<span class="hljs-number">0x53113ec0</span>, <span class="hljs-number">0x1640e3d3</span>, <span class="hljs-number">0x38abbd60</span>, <span class="hljs-number">0x2547adf0</span>, <span class="hljs-number">0xba38209c</span>, <span class="hljs-number">0xf746ce76</span>,
+			<span class="hljs-number">0x77afa1c5</span>, <span class="hljs-number">0x20756060</span>, <span class="hljs-number">0x85cbfe4e</span>, <span class="hljs-number">0x8ae88dd8</span>, <span class="hljs-number">0x7aaaf9b0</span>, <span class="hljs-number">0x4cf9aa7e</span>,
+			<span class="hljs-number">0x1948c25c</span>, <span class="hljs-number">0x02fb8a8c</span>, <span class="hljs-number">0x01c36ae4</span>, <span class="hljs-number">0xd6ebe1f9</span>, <span class="hljs-number">0x90d4f869</span>, <span class="hljs-number">0xa65cdea0</span>,
+			<span class="hljs-number">0x3f09252d</span>, <span class="hljs-number">0xc208e69f</span>, <span class="hljs-number">0xb74e6132</span>, <span class="hljs-number">0xce77e25b</span>, <span class="hljs-number">0x578fdfe3</span>, <span class="hljs-number">0x3ac372e6</span> &#125;;
+	<span class="hljs-comment">// bcrypt IV: &quot;OrpheanBeholderScryDoubt&quot;</span>
+	<span class="hljs-keyword">static</span> <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> bf_crypt_ciphertext[] = &#123; <span class="hljs-number">0x4f727068</span>, <span class="hljs-number">0x65616e42</span>,
+			<span class="hljs-number">0x65686f6c</span>, <span class="hljs-number">0x64657253</span>, <span class="hljs-number">0x63727944</span>, <span class="hljs-number">0x6f756274</span> &#125;;
+	<span class="hljs-comment">// Table for Base64 encoding</span>
+	<span class="hljs-keyword">static</span> <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">char</span> base64_code[] = &#123; <span class="hljs-string">&#x27;.&#x27;</span>, <span class="hljs-string">&#x27;/&#x27;</span>, <span class="hljs-string">&#x27;A&#x27;</span>, <span class="hljs-string">&#x27;B&#x27;</span>, <span class="hljs-string">&#x27;C&#x27;</span>, <span class="hljs-string">&#x27;D&#x27;</span>, <span class="hljs-string">&#x27;E&#x27;</span>, <span class="hljs-string">&#x27;F&#x27;</span>,
+			<span class="hljs-string">&#x27;G&#x27;</span>, <span class="hljs-string">&#x27;H&#x27;</span>, <span class="hljs-string">&#x27;I&#x27;</span>, <span class="hljs-string">&#x27;J&#x27;</span>, <span class="hljs-string">&#x27;K&#x27;</span>, <span class="hljs-string">&#x27;L&#x27;</span>, <span class="hljs-string">&#x27;M&#x27;</span>, <span class="hljs-string">&#x27;N&#x27;</span>, <span class="hljs-string">&#x27;O&#x27;</span>, <span class="hljs-string">&#x27;P&#x27;</span>, <span class="hljs-string">&#x27;Q&#x27;</span>, <span class="hljs-string">&#x27;R&#x27;</span>, <span class="hljs-string">&#x27;S&#x27;</span>, <span class="hljs-string">&#x27;T&#x27;</span>, <span class="hljs-string">&#x27;U&#x27;</span>,
+			<span class="hljs-string">&#x27;V&#x27;</span>, <span class="hljs-string">&#x27;W&#x27;</span>, <span class="hljs-string">&#x27;X&#x27;</span>, <span class="hljs-string">&#x27;Y&#x27;</span>, <span class="hljs-string">&#x27;Z&#x27;</span>, <span class="hljs-string">&#x27;a&#x27;</span>, <span class="hljs-string">&#x27;b&#x27;</span>, <span class="hljs-string">&#x27;c&#x27;</span>, <span class="hljs-string">&#x27;d&#x27;</span>, <span class="hljs-string">&#x27;e&#x27;</span>, <span class="hljs-string">&#x27;f&#x27;</span>, <span class="hljs-string">&#x27;g&#x27;</span>, <span class="hljs-string">&#x27;h&#x27;</span>, <span class="hljs-string">&#x27;i&#x27;</span>, <span class="hljs-string">&#x27;j&#x27;</span>,
+			<span class="hljs-string">&#x27;k&#x27;</span>, <span class="hljs-string">&#x27;l&#x27;</span>, <span class="hljs-string">&#x27;m&#x27;</span>, <span class="hljs-string">&#x27;n&#x27;</span>, <span class="hljs-string">&#x27;o&#x27;</span>, <span class="hljs-string">&#x27;p&#x27;</span>, <span class="hljs-string">&#x27;q&#x27;</span>, <span class="hljs-string">&#x27;r&#x27;</span>, <span class="hljs-string">&#x27;s&#x27;</span>, <span class="hljs-string">&#x27;t&#x27;</span>, <span class="hljs-string">&#x27;u&#x27;</span>, <span class="hljs-string">&#x27;v&#x27;</span>, <span class="hljs-string">&#x27;w&#x27;</span>, <span class="hljs-string">&#x27;x&#x27;</span>, <span class="hljs-string">&#x27;y&#x27;</span>,
+			<span class="hljs-string">&#x27;z&#x27;</span>, <span class="hljs-string">&#x27;0&#x27;</span>, <span class="hljs-string">&#x27;1&#x27;</span>, <span class="hljs-string">&#x27;2&#x27;</span>, <span class="hljs-string">&#x27;3&#x27;</span>, <span class="hljs-string">&#x27;4&#x27;</span>, <span class="hljs-string">&#x27;5&#x27;</span>, <span class="hljs-string">&#x27;6&#x27;</span>, <span class="hljs-string">&#x27;7&#x27;</span>, <span class="hljs-string">&#x27;8&#x27;</span>, <span class="hljs-string">&#x27;9&#x27;</span> &#125;;
+	<span class="hljs-comment">// Table for Base64 decoding</span>
+	<span class="hljs-keyword">static</span> <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">byte</span> index_64[] = &#123; -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>,
+			-<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>,
+			-<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">54</span>, <span class="hljs-number">55</span>,
+			<span class="hljs-number">56</span>, <span class="hljs-number">57</span>, <span class="hljs-number">58</span>, <span class="hljs-number">59</span>, <span class="hljs-number">60</span>, <span class="hljs-number">61</span>, <span class="hljs-number">62</span>, <span class="hljs-number">63</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>, <span class="hljs-number">7</span>,
+			<span class="hljs-number">8</span>, <span class="hljs-number">9</span>, <span class="hljs-number">10</span>, <span class="hljs-number">11</span>, <span class="hljs-number">12</span>, <span class="hljs-number">13</span>, <span class="hljs-number">14</span>, <span class="hljs-number">15</span>, <span class="hljs-number">16</span>, <span class="hljs-number">17</span>, <span class="hljs-number">18</span>, <span class="hljs-number">19</span>, <span class="hljs-number">20</span>, <span class="hljs-number">21</span>, <span class="hljs-number">22</span>, <span class="hljs-number">23</span>, <span class="hljs-number">24</span>, <span class="hljs-number">25</span>, <span class="hljs-number">26</span>, <span class="hljs-number">27</span>,
+			-<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, <span class="hljs-number">28</span>, <span class="hljs-number">29</span>, <span class="hljs-number">30</span>, <span class="hljs-number">31</span>, <span class="hljs-number">32</span>, <span class="hljs-number">33</span>, <span class="hljs-number">34</span>, <span class="hljs-number">35</span>, <span class="hljs-number">36</span>, <span class="hljs-number">37</span>, <span class="hljs-number">38</span>, <span class="hljs-number">39</span>, <span class="hljs-number">40</span>,
+			<span class="hljs-number">41</span>, <span class="hljs-number">42</span>, <span class="hljs-number">43</span>, <span class="hljs-number">44</span>, <span class="hljs-number">45</span>, <span class="hljs-number">46</span>, <span class="hljs-number">47</span>, <span class="hljs-number">48</span>, <span class="hljs-number">49</span>, <span class="hljs-number">50</span>, <span class="hljs-number">51</span>, <span class="hljs-number">52</span>, <span class="hljs-number">53</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span>, -<span class="hljs-number">1</span> &#125;;
+	<span class="hljs-comment">// Expanded Blowfish key</span>
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> P[];
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> S[];
+	
+	<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">(String[] args)</span> </span>&#123;
+		<span class="hljs-comment">//10是不确定的  此处只是个例子</span>
+		String salt = gensalt(<span class="hljs-number">10</span>, <span class="hljs-keyword">new</span> SecureRandom());
+		<span class="hljs-comment">//对123456加密</span>
+		System.out.println(hashpw(<span class="hljs-string">&quot;123456&quot;</span>, salt));
+		<span class="hljs-comment">//是否匹配</span>
+		System.out.println(matches(<span class="hljs-string">&quot;123456&quot;</span>, <span class="hljs-string">&quot;$2a$10$/bTVvqqlH9UiE0ZJZ7N2Me3RIgUCdgMheyTgV0B4cMCSokPa.6oCa&quot;</span>));
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">init_key</span><span class="hljs-params">()</span> </span>&#123;
+		P = (<span class="hljs-keyword">int</span>[]) P_orig.clone();
+		S = (<span class="hljs-keyword">int</span>[]) S_orig.clone();
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">encode_base64</span><span class="hljs-params">(<span class="hljs-keyword">byte</span> d[], <span class="hljs-keyword">int</span> len, StringBuilder rs)</span></span>
+<span class="hljs-function">			<span class="hljs-keyword">throws</span> IllegalArgumentException </span>&#123;
+		<span class="hljs-keyword">int</span> off = <span class="hljs-number">0</span>;
+		<span class="hljs-keyword">int</span> c1, c2;
+ 
+		<span class="hljs-keyword">if</span> (len &lt;= <span class="hljs-number">0</span> || len &gt; d.length) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid len&quot;</span>);
+		&#125;
+ 
+		<span class="hljs-keyword">while</span> (off &lt; len) &#123;
+			c1 = d[off++] &amp; <span class="hljs-number">0xff</span>;
+			rs.append(base64_code[(c1 &gt;&gt; <span class="hljs-number">2</span>) &amp; <span class="hljs-number">0x3f</span>]);
+			c1 = (c1 &amp; <span class="hljs-number">0x03</span>) &lt;&lt; <span class="hljs-number">4</span>;
+			<span class="hljs-keyword">if</span> (off &gt;= len) &#123;
+				rs.append(base64_code[c1 &amp; <span class="hljs-number">0x3f</span>]);
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			c2 = d[off++] &amp; <span class="hljs-number">0xff</span>;
+			c1 |= (c2 &gt;&gt; <span class="hljs-number">4</span>) &amp; <span class="hljs-number">0x0f</span>;
+			rs.append(base64_code[c1 &amp; <span class="hljs-number">0x3f</span>]);
+			c1 = (c2 &amp; <span class="hljs-number">0x0f</span>) &lt;&lt; <span class="hljs-number">2</span>;
+			<span class="hljs-keyword">if</span> (off &gt;= len) &#123;
+				rs.append(base64_code[c1 &amp; <span class="hljs-number">0x3f</span>]);
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			c2 = d[off++] &amp; <span class="hljs-number">0xff</span>;
+			c1 |= (c2 &gt;&gt; <span class="hljs-number">6</span>) &amp; <span class="hljs-number">0x03</span>;
+			rs.append(base64_code[c1 &amp; <span class="hljs-number">0x3f</span>]);
+			rs.append(base64_code[c2 &amp; <span class="hljs-number">0x3f</span>]);
+		&#125;
+	&#125;
+	
+	<span class="hljs-keyword">static</span> <span class="hljs-keyword">byte</span>[] decode_base64(String s, <span class="hljs-keyword">int</span> maxolen) <span class="hljs-keyword">throws</span> IllegalArgumentException &#123;
+		ByteArrayOutputStream out = <span class="hljs-keyword">new</span> ByteArrayOutputStream(maxolen);
+		<span class="hljs-keyword">int</span> off = <span class="hljs-number">0</span>, slen = s.length(), olen = <span class="hljs-number">0</span>;
+		<span class="hljs-keyword">byte</span> c1, c2, c3, c4, o;
+ 
+		<span class="hljs-keyword">if</span> (maxolen &lt;= <span class="hljs-number">0</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid maxolen&quot;</span>);
+		&#125;
+ 
+		<span class="hljs-keyword">while</span> (off &lt; slen - <span class="hljs-number">1</span> &amp;&amp; olen &lt; maxolen) &#123;
+			c1 = char64(s.charAt(off++));
+			c2 = char64(s.charAt(off++));
+			<span class="hljs-keyword">if</span> (c1 == -<span class="hljs-number">1</span> || c2 == -<span class="hljs-number">1</span>) &#123;
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			o = (<span class="hljs-keyword">byte</span>) (c1 &lt;&lt; <span class="hljs-number">2</span>);
+			o |= (c2 &amp; <span class="hljs-number">0x30</span>) &gt;&gt; <span class="hljs-number">4</span>;
+			out.write(o);
+			<span class="hljs-keyword">if</span> (++olen &gt;= maxolen || off &gt;= slen) &#123;
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			c3 = char64(s.charAt(off++));
+			<span class="hljs-keyword">if</span> (c3 == -<span class="hljs-number">1</span>) &#123;
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			o = (<span class="hljs-keyword">byte</span>) ((c2 &amp; <span class="hljs-number">0x0f</span>) &lt;&lt; <span class="hljs-number">4</span>);
+			o |= (c3 &amp; <span class="hljs-number">0x3c</span>) &gt;&gt; <span class="hljs-number">2</span>;
+			out.write(o);
+			<span class="hljs-keyword">if</span> (++olen &gt;= maxolen || off &gt;= slen) &#123;
+				<span class="hljs-keyword">break</span>;
+			&#125;
+			c4 = char64(s.charAt(off++));
+			o = (<span class="hljs-keyword">byte</span>) ((c3 &amp; <span class="hljs-number">0x03</span>) &lt;&lt; <span class="hljs-number">6</span>);
+			o |= c4;
+			out.write(o);
+			++olen;
+		&#125;
+ 
+		<span class="hljs-keyword">return</span> out.toByteArray();
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">byte</span> <span class="hljs-title">char64</span><span class="hljs-params">(<span class="hljs-keyword">char</span> x)</span> </span>&#123;
+		<span class="hljs-keyword">if</span> (x &gt; index_64.length) &#123;
+			<span class="hljs-keyword">return</span> -<span class="hljs-number">1</span>;
+		&#125;
+		<span class="hljs-keyword">return</span> index_64[x];
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title">gensalt</span><span class="hljs-params">(<span class="hljs-keyword">int</span> log_rounds, SecureRandom random)</span> </span>&#123;
+		<span class="hljs-keyword">if</span> (log_rounds &lt; <span class="hljs-number">4</span> || log_rounds &gt; <span class="hljs-number">31</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Bad number of rounds&quot;</span>);
+		&#125;
+		StringBuilder rs = <span class="hljs-keyword">new</span> StringBuilder();
+		<span class="hljs-keyword">byte</span> rnd[] = <span class="hljs-keyword">new</span> <span class="hljs-keyword">byte</span>[BCRYPT_SALT_LEN];
+ 
+		random.nextBytes(rnd);
+ 
+		rs.append(<span class="hljs-string">&quot;$2a$&quot;</span>);
+		<span class="hljs-keyword">if</span> (log_rounds &lt; <span class="hljs-number">10</span>) &#123;
+			rs.append(<span class="hljs-string">&quot;0&quot;</span>);
+		&#125;
+		rs.append(log_rounds);
+		rs.append(<span class="hljs-string">&quot;$&quot;</span>);
+		encode_base64(rnd, rnd.length, rs);
+		<span class="hljs-keyword">return</span> rs.toString();
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title">hashpw</span><span class="hljs-params">(String password, String salt)</span> </span>&#123;
+		String real_salt;
+		<span class="hljs-keyword">byte</span> passwordb[], saltb[], hashed[];
+		<span class="hljs-keyword">char</span> minor = (<span class="hljs-keyword">char</span>) <span class="hljs-number">0</span>;
+		<span class="hljs-keyword">int</span> rounds, off = <span class="hljs-number">0</span>;
+		StringBuilder rs = <span class="hljs-keyword">new</span> StringBuilder();
+ 
+		<span class="hljs-keyword">int</span> saltLength = salt.length();
+ 
+		<span class="hljs-keyword">if</span> (saltLength &lt; <span class="hljs-number">28</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid salt&quot;</span>);
+		&#125;
+ 
+		<span class="hljs-keyword">if</span> (salt.charAt(<span class="hljs-number">0</span>) != <span class="hljs-string">&#x27;$&#x27;</span> || salt.charAt(<span class="hljs-number">1</span>) != <span class="hljs-string">&#x27;2&#x27;</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid salt version&quot;</span>);
+		&#125;
+		<span class="hljs-keyword">if</span> (salt.charAt(<span class="hljs-number">2</span>) == <span class="hljs-string">&#x27;$&#x27;</span>) &#123;
+			off = <span class="hljs-number">3</span>;
+		&#125;
+		<span class="hljs-keyword">else</span> &#123;
+			minor = salt.charAt(<span class="hljs-number">2</span>);
+			<span class="hljs-keyword">if</span> (minor != <span class="hljs-string">&#x27;a&#x27;</span> || salt.charAt(<span class="hljs-number">3</span>) != <span class="hljs-string">&#x27;$&#x27;</span>) &#123;
+				<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid salt revision&quot;</span>);
+			&#125;
+			off = <span class="hljs-number">4</span>;
+		&#125;
+ 
+		<span class="hljs-keyword">if</span> (saltLength - off &lt; <span class="hljs-number">25</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Invalid salt&quot;</span>);
+		&#125;
+ 
+		<span class="hljs-comment">// Extract number of rounds</span>
+		<span class="hljs-keyword">if</span> (salt.charAt(off + <span class="hljs-number">2</span>) &gt; <span class="hljs-string">&#x27;$&#x27;</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Missing salt rounds&quot;</span>);
+		&#125;
+		rounds = Integer.parseInt(salt.substring(off, off + <span class="hljs-number">2</span>));
+ 
+		real_salt = salt.substring(off + <span class="hljs-number">3</span>, off + <span class="hljs-number">25</span>);
+		<span class="hljs-keyword">try</span> &#123;
+			passwordb = (password + (minor &gt;= <span class="hljs-string">&#x27;a&#x27;</span> ? <span class="hljs-string">&quot;\000&quot;</span> : <span class="hljs-string">&quot;&quot;</span>)).getBytes(<span class="hljs-string">&quot;UTF-8&quot;</span>);
+		&#125;
+		<span class="hljs-keyword">catch</span> (UnsupportedEncodingException uee) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> AssertionError(<span class="hljs-string">&quot;UTF-8 is not supported&quot;</span>);
+		&#125;
+ 
+		saltb = decode_base64(real_salt, BCRYPT_SALT_LEN);
+ 
+		hashed = crypt_raw(passwordb, saltb, rounds);
+ 
+		rs.append(<span class="hljs-string">&quot;$2&quot;</span>);
+		<span class="hljs-keyword">if</span> (minor &gt;= <span class="hljs-string">&#x27;a&#x27;</span>) &#123;
+			rs.append(minor);
+		&#125;
+		rs.append(<span class="hljs-string">&quot;$&quot;</span>);
+		<span class="hljs-keyword">if</span> (rounds &lt; <span class="hljs-number">10</span>) &#123;
+			rs.append(<span class="hljs-string">&quot;0&quot;</span>);
+		&#125;
+		rs.append(rounds);
+		rs.append(<span class="hljs-string">&quot;$&quot;</span>);
+		encode_base64(saltb, saltb.length, rs);
+		encode_base64(hashed, bf_crypt_ciphertext.length * <span class="hljs-number">4</span> - <span class="hljs-number">1</span>, rs);
+		<span class="hljs-keyword">return</span> rs.toString();
+	&#125;
+	
+	<span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">byte</span>[] crypt_raw(<span class="hljs-keyword">byte</span> password[], <span class="hljs-keyword">byte</span> salt[], <span class="hljs-keyword">int</span> log_rounds) &#123;
+		<span class="hljs-keyword">int</span> cdata[] = (<span class="hljs-keyword">int</span>[]) bf_crypt_ciphertext.clone();
+		<span class="hljs-keyword">int</span> clen = cdata.length;
+		<span class="hljs-keyword">byte</span> ret[];
+ 
+		<span class="hljs-keyword">long</span> rounds = roundsForLogRounds(log_rounds);
+ 
+		init_key();
+		ekskey(salt, password);
+		<span class="hljs-keyword">for</span> (<span class="hljs-keyword">long</span> i = <span class="hljs-number">0</span>; i &lt; rounds; i++) &#123;
+			key(password);
+			key(salt);
+		&#125;
+ 
+		<span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">64</span>; i++) &#123;
+			<span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> j = <span class="hljs-number">0</span>; j &lt; (clen &gt;&gt; <span class="hljs-number">1</span>); j++) &#123;
+				encipher(cdata, j &lt;&lt; <span class="hljs-number">1</span>);
+			&#125;
+		&#125;
+ 
+		ret = <span class="hljs-keyword">new</span> <span class="hljs-keyword">byte</span>[clen * <span class="hljs-number">4</span>];
+		<span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>, j = <span class="hljs-number">0</span>; i &lt; clen; i++) &#123;
+			ret[j++] = (<span class="hljs-keyword">byte</span>) ((cdata[i] &gt;&gt; <span class="hljs-number">24</span>) &amp; <span class="hljs-number">0xff</span>);
+			ret[j++] = (<span class="hljs-keyword">byte</span>) ((cdata[i] &gt;&gt; <span class="hljs-number">16</span>) &amp; <span class="hljs-number">0xff</span>);
+			ret[j++] = (<span class="hljs-keyword">byte</span>) ((cdata[i] &gt;&gt; <span class="hljs-number">8</span>) &amp; <span class="hljs-number">0xff</span>);
+			ret[j++] = (<span class="hljs-keyword">byte</span>) (cdata[i] &amp; <span class="hljs-number">0xff</span>);
+		&#125;
+		<span class="hljs-keyword">return</span> ret;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">long</span> <span class="hljs-title">roundsForLogRounds</span><span class="hljs-params">(<span class="hljs-keyword">int</span> log_rounds)</span> </span>&#123;
+		<span class="hljs-keyword">if</span> (log_rounds &lt; <span class="hljs-number">4</span> || log_rounds &gt; <span class="hljs-number">31</span>) &#123;
+			<span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> IllegalArgumentException(<span class="hljs-string">&quot;Bad number of rounds&quot;</span>);
+		&#125;
+		<span class="hljs-keyword">return</span> <span class="hljs-number">1L</span> &lt;&lt; log_rounds;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">ekskey</span><span class="hljs-params">(<span class="hljs-keyword">byte</span> data[], <span class="hljs-keyword">byte</span> key[])</span> </span>&#123;
+		<span class="hljs-keyword">int</span> i;
+		<span class="hljs-keyword">int</span> koffp[] = &#123; <span class="hljs-number">0</span> &#125;, doffp[] = &#123; <span class="hljs-number">0</span> &#125;;
+		<span class="hljs-keyword">int</span> lr[] = &#123; <span class="hljs-number">0</span>, <span class="hljs-number">0</span> &#125;;
+		<span class="hljs-keyword">int</span> plen = P.length, slen = S.length;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; plen; i++) &#123;
+			P[i] = P[i] ^ streamtoword(key, koffp);
+		&#125;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; plen; i += <span class="hljs-number">2</span>) &#123;
+			lr[<span class="hljs-number">0</span>] ^= streamtoword(data, doffp);
+			lr[<span class="hljs-number">1</span>] ^= streamtoword(data, doffp);
+			encipher(lr, <span class="hljs-number">0</span>);
+			P[i] = lr[<span class="hljs-number">0</span>];
+			P[i + <span class="hljs-number">1</span>] = lr[<span class="hljs-number">1</span>];
+		&#125;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; slen; i += <span class="hljs-number">2</span>) &#123;
+			lr[<span class="hljs-number">0</span>] ^= streamtoword(data, doffp);
+			lr[<span class="hljs-number">1</span>] ^= streamtoword(data, doffp);
+			encipher(lr, <span class="hljs-number">0</span>);
+			S[i] = lr[<span class="hljs-number">0</span>];
+			S[i + <span class="hljs-number">1</span>] = lr[<span class="hljs-number">1</span>];
+		&#125;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> <span class="hljs-title">streamtoword</span><span class="hljs-params">(<span class="hljs-keyword">byte</span> data[], <span class="hljs-keyword">int</span> offp[])</span> </span>&#123;
+		<span class="hljs-keyword">int</span> i;
+		<span class="hljs-keyword">int</span> word = <span class="hljs-number">0</span>;
+		<span class="hljs-keyword">int</span> off = offp[<span class="hljs-number">0</span>];
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">4</span>; i++) &#123;
+			word = (word &lt;&lt; <span class="hljs-number">8</span>) | (data[off] &amp; <span class="hljs-number">0xff</span>);
+			off = (off + <span class="hljs-number">1</span>) % data.length;
+		&#125;
+ 
+		offp[<span class="hljs-number">0</span>] = off;
+		<span class="hljs-keyword">return</span> word;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">void</span> <span class="hljs-title">encipher</span><span class="hljs-params">(<span class="hljs-keyword">int</span> lr[], <span class="hljs-keyword">int</span> off)</span> </span>&#123;
+		<span class="hljs-keyword">int</span> i, n, l = lr[off], r = lr[off + <span class="hljs-number">1</span>];
+ 
+		l ^= P[<span class="hljs-number">0</span>];
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt;= BLOWFISH_NUM_ROUNDS - <span class="hljs-number">2</span>;) &#123;
+			<span class="hljs-comment">// Feistel substitution on left word</span>
+			n = S[(l &gt;&gt; <span class="hljs-number">24</span>) &amp; <span class="hljs-number">0xff</span>];
+			n += S[<span class="hljs-number">0x100</span> | ((l &gt;&gt; <span class="hljs-number">16</span>) &amp; <span class="hljs-number">0xff</span>)];
+			n ^= S[<span class="hljs-number">0x200</span> | ((l &gt;&gt; <span class="hljs-number">8</span>) &amp; <span class="hljs-number">0xff</span>)];
+			n += S[<span class="hljs-number">0x300</span> | (l &amp; <span class="hljs-number">0xff</span>)];
+			r ^= n ^ P[++i];
+ 
+			<span class="hljs-comment">// Feistel substitution on right word</span>
+			n = S[(r &gt;&gt; <span class="hljs-number">24</span>) &amp; <span class="hljs-number">0xff</span>];
+			n += S[<span class="hljs-number">0x100</span> | ((r &gt;&gt; <span class="hljs-number">16</span>) &amp; <span class="hljs-number">0xff</span>)];
+			n ^= S[<span class="hljs-number">0x200</span> | ((r &gt;&gt; <span class="hljs-number">8</span>) &amp; <span class="hljs-number">0xff</span>)];
+			n += S[<span class="hljs-number">0x300</span> | (r &amp; <span class="hljs-number">0xff</span>)];
+			l ^= n ^ P[++i];
+		&#125;
+		lr[off] = r ^ P[BLOWFISH_NUM_ROUNDS + <span class="hljs-number">1</span>];
+		lr[off + <span class="hljs-number">1</span>] = l;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">key</span><span class="hljs-params">(<span class="hljs-keyword">byte</span> key[])</span> </span>&#123;
+		<span class="hljs-keyword">int</span> i;
+		<span class="hljs-keyword">int</span> koffp[] = &#123; <span class="hljs-number">0</span> &#125;;
+		<span class="hljs-keyword">int</span> lr[] = &#123; <span class="hljs-number">0</span>, <span class="hljs-number">0</span> &#125;;
+		<span class="hljs-keyword">int</span> plen = P.length, slen = S.length;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; plen; i++) &#123;
+			P[i] = P[i] ^ streamtoword(key, koffp);
+		&#125;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; plen; i += <span class="hljs-number">2</span>) &#123;
+			encipher(lr, <span class="hljs-number">0</span>);
+			P[i] = lr[<span class="hljs-number">0</span>];
+			P[i + <span class="hljs-number">1</span>] = lr[<span class="hljs-number">1</span>];
+		&#125;
+ 
+		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; slen; i += <span class="hljs-number">2</span>) &#123;
+			encipher(lr, <span class="hljs-number">0</span>);
+			S[i] = lr[<span class="hljs-number">0</span>];
+			S[i + <span class="hljs-number">1</span>] = lr[<span class="hljs-number">1</span>];
+		&#125;
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">matches</span><span class="hljs-params">(CharSequence rawPassword, String encodedPassword)</span> </span>&#123;
+		<span class="hljs-keyword">if</span> (encodedPassword == <span class="hljs-keyword">null</span> || encodedPassword.length() == <span class="hljs-number">0</span>) &#123;
+			<span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+		&#125;
+ 
+		<span class="hljs-keyword">if</span> (!BCRYPT_PATTERN.matcher(encodedPassword).matches()) &#123;
+			<span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+		&#125;
+ 
+		<span class="hljs-keyword">return</span> checkpw(rawPassword.toString(), encodedPassword);
+	&#125;
+	
+	<span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">checkpw</span><span class="hljs-params">(String plaintext, String hashed)</span> </span>&#123;
+		<span class="hljs-keyword">return</span> equalsNoEarlyReturn(hashed, hashpw(plaintext, hashed));
+	&#125;
+ 
+	<span class="hljs-function"><span class="hljs-keyword">static</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">equalsNoEarlyReturn</span><span class="hljs-params">(String a, String b)</span> </span>&#123;
+		<span class="hljs-keyword">char</span>[] caa = a.toCharArray();
+		<span class="hljs-keyword">char</span>[] cab = b.toCharArray();
+ 
+		<span class="hljs-keyword">if</span> (caa.length != cab.length) &#123;
+			<span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+		&#125;
+ 
+		<span class="hljs-keyword">byte</span> ret = <span class="hljs-number">0</span>;
+		<span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; caa.length; i++) &#123;
+			ret |= caa[i] ^ cab[i];
+		&#125;
+		<span class="hljs-keyword">return</span> ret == <span class="hljs-number">0</span>;
+	&#125;
+&#125;</code></pre></div><h1 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h1><ol><li>Bcrypt生成的密文是60位的。而MD5的是32位的。</li><li>Bcrypt的破解成本更高。</li></ol></div><hr><div><div class="post-metas mb-3"><div class="post-meta"><i class="iconfont icon-tags"></i> <a class="hover-with-bg" href="/tags/%E7%AE%97%E6%B3%95/">算法</a></div></div><p class="note note-warning">本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！</p><div class="post-prevnext row"><article class="post-prev col-6"><a href="/2020/06/02/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%BF%B0/"><i class="iconfont icon-arrowleft"></i> <span class="hidden-mobile">设计模式（一）——设计模式概述</span> <span class="visible-mobile">上一篇</span></a></article><article class="post-next col-6"><a href="/2020/04/16/%E8%AF%BB%E9%98%BF%E9%87%8C%E3%80%8AJava%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C%E3%80%8B%E7%AC%94%E8%AE%B0(%E4%B8%80)/"><span class="hidden-mobile">读阿里《Java开发手册》笔记(一)</span> <span class="visible-mobile">下一篇</span> <i class="iconfont icon-arrowright"></i></a></article></div></div><article class="comments" id="comments"><div id="vcomments"></div><script type="text/javascript">function loadValine(){addScript("https://cdn.staticfile.org/valine/1.4.14/Valine.min.js",function(){new Valine({el:"#vcomments",app_id:"DQP3rwVtn77z2B5pTJau07ec-MdYXbMMI",app_key:"D7C5Oe3Hr8zKTIOAKjbkRmNz",placeholder:"说点什么",path:window.location.pathname,avatar:"retro",meta:["nick","mail","link"],pageSize:"10",lang:"zh-CN",highlight:!1,recordIP:!1,serverURLs:""})})}waitElementVisible("vcomments",loadValine)</script><noscript>Please enable JavaScript to view the <a target="_blank" href="https://valine.js.org" rel="nofollow noopener noopener">comments powered by Valine.</a></noscript></article></article></div></div></div><div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn"><div id="toc"><p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p><div id="tocbot"></div></div></div></div></div></main><a id="scroll-top-button" href="#" role="button"><i class="iconfont icon-arrowup" aria-hidden="true"></i></a><div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable modal-lg" role="document"><div class="modal-content"><div class="modal-header text-center"><h4 class="modal-title w-100 font-weight-bold">搜索</h4><button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div><div class="modal-body mx-3"><div class="md-form mb-5"><input type="text" id="local-search-input" class="form-control validate"> <label data-error="x" data-success="v" for="local-search-input">关键词</label></div><div class="list-group" id="local-search-result"></div></div></div></div></div><footer class="mt-5"><div class="text-center py-3"><div><a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a></div></div></footer><script src="https://cdn.staticfile.org/jquery/3.4.1/jquery.min.js"></script><script src="https://cdn.staticfile.org/twitter-bootstrap/4.4.1/js/bootstrap.min.js"></script><script src="/js/debouncer.js"></script><script src="/js/main.js"></script><script src="/js/lazyload.js"></script><script src="https://cdn.staticfile.org/tocbot/4.11.1/tocbot.min.js"></script><script>$(document).ready(function(){var t=$("#board-ctn").offset().top;tocbot.init({tocSelector:"#tocbot",contentSelector:"#post-body",headingSelector:"h1,h2,h3,h4,h5,h6",linkClass:"tocbot-link",activeLinkClass:"tocbot-active-link",listClass:"tocbot-list",isCollapsedClass:"tocbot-is-collapsed",collapsibleClass:"tocbot-is-collapsible",collapseDepth:0,scrollSmooth:!0,headingsOffset:-t}),0<$(".toc-list-item").length&&$("#toc").css("visibility","visible")})</script><script src="https://cdn.staticfile.org/typed.js/2.0.11/typed.min.js"></script><script>var typed=new Typed("#subtitle",{strings:["  ","BCrypt加密算法，号称目前最安全的算法之一&nbsp;"],cursorChar:"_",typeSpeed:70,loop:!1});typed.stop(),$(document).ready(function(){$(".typed-cursor").addClass("h2"),typed.start()})</script><script src="https://cdn.staticfile.org/anchor-js/4.2.2/anchor.min.js"></script><script>anchors.options = {
+      placement: "right",
+      visible: "hover",
+      
+    };
+    var el = "h1,h2,h3,h4,h5,h6".split(",");
+    var res = [];
+    for (item of el) {
+      res.push(".markdown-body > " + item)
+    }
+    anchors.add(res.join(", "))</script><script src="/js/local-search.js"></script><script>var path="/local-search.xml",inputArea=document.querySelector("#local-search-input");inputArea.onclick=function(){searchFunc(path,"local-search-input","local-search-result"),this.onclick=null}</script><script src="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.js"></script><link rel="stylesheet" href="https://cdn.staticfile.org/fancybox/3.5.7/jquery.fancybox.min.css"><script>$("#post img:not(.no-zoom img, img[no-zoom]), img[zoom]").each(function(){var t=document.createElement("a");$(t).attr("data-fancybox","images"),$(t).attr("href",$(this).attr("src")),$(this).wrap(t)})</script></body></html>
