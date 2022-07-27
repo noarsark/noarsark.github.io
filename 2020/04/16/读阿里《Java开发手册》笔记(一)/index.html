@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha256-DfWjNxDkM94fVBWx1H5BMMp0Zq7luBlV8QRcSES7s+0=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"noarsark.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.12.2","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="左移&lt;&lt;和右移&gt;&gt;在左移&lt;&lt;和右移&gt;&gt;两种运算中，符号位均参与移动，除负数往右移动，高位补1之外，其他情况均在空位补0。 无符号右移&gt;&gt;&gt;当向右移动时，正负数高位均补0，正数不断向右移动的最小值是0，而负数不断向右移动的最小值是1。无符号意即藐视符号位，符号位失去特权，必须像其他平常的数字位一起向右移动，高位直接补0，根本不关心是正">
+<meta property="og:type" content="article">
+<meta property="og:title" content="读阿里《Java开发手册》笔记(一)">
+<meta property="og:url" content="https://noarsark.github.io/2020/04/16/%E8%AF%BB%E9%98%BF%E9%87%8C%E3%80%8AJava%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C%E3%80%8B%E7%AC%94%E8%AE%B0(%E4%B8%80)/index.html">
+<meta property="og:site_name" content="noarsark&#39;s blog">
+<meta property="og:description" content="左移&lt;&lt;和右移&gt;&gt;在左移&lt;&lt;和右移&gt;&gt;两种运算中，符号位均参与移动，除负数往右移动，高位补1之外，其他情况均在空位补0。 无符号右移&gt;&gt;&gt;当向右移动时，正负数高位均补0，正数不断向右移动的最小值是0，而负数不断向右移动的最小值是1。无符号意即藐视符号位，符号位失去特权，必须像其他平常的数字位一起向右移动，高位直接补0，根本不关心是正">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-04-16T07:32:40.000Z">
+<meta property="article:modified_time" content="2020-12-22T14:34:31.333Z">
+<meta property="article:author" content="noarsark">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://noarsark.github.io/2020/04/16/%E8%AF%BB%E9%98%BF%E9%87%8C%E3%80%8AJava%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C%E3%80%8B%E7%AC%94%E8%AE%B0(%E4%B8%80)/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://noarsark.github.io/2020/04/16/%E8%AF%BB%E9%98%BF%E9%87%8C%E3%80%8AJava%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C%E3%80%8B%E7%AC%94%E8%AE%B0(%E4%B8%80)/","path":"2020/04/16/读阿里《Java开发手册》笔记(一)/","title":"读阿里《Java开发手册》笔记(一)"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>读阿里《Java开发手册》笔记(一) | noarsark's blog</title>
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">noarsark's blog</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A6%E7%A7%BB-lt-lt-%E5%92%8C%E5%8F%B3%E7%A7%BB-gt-gt"><span class="nav-number">1.</span> <span class="nav-text">左移&lt;&lt;和右移&gt;&gt;</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A0%E7%AC%A6%E5%8F%B7%E5%8F%B3%E7%A7%BB-gt-gt-gt"><span class="nav-number">2.</span> <span class="nav-text">无符号右移&gt;&gt;&gt;</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">noarsark</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/noarsark" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;noarsark" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://noarsark.github.io/2020/04/16/%E8%AF%BB%E9%98%BF%E9%87%8C%E3%80%8AJava%E5%BC%80%E5%8F%91%E6%89%8B%E5%86%8C%E3%80%8B%E7%AC%94%E8%AE%B0(%E4%B8%80)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="noarsark">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="noarsark's blog">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="读阿里《Java开发手册》笔记(一) | noarsark's blog">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          读阿里《Java开发手册》笔记(一)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-04-16 15:32:40" itemprop="dateCreated datePublished" datetime="2020-04-16T15:32:40+08:00">2020-04-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2020-12-22 22:34:31" itemprop="dateModified" datetime="2020-12-22T22:34:31+08:00">2020-12-22</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="左移-lt-lt-和右移-gt-gt"><a href="#左移-lt-lt-和右移-gt-gt" class="headerlink" title="左移&lt;&lt;和右移&gt;&gt;"></a>左移&lt;&lt;和右移&gt;&gt;</h1><p>在左移&lt;&lt;和右移&gt;&gt;两种运算中，符号位均参与移动，除负数往右移动，高位补1之外，其他情况均在空位补0。</p>
+<h1 id="无符号右移-gt-gt-gt"><a href="#无符号右移-gt-gt-gt" class="headerlink" title="无符号右移&gt;&gt;&gt;"></a>无符号右移&gt;&gt;&gt;</h1><p>当向右移动时，正负数高位均补0，正数不断向右移动的最小值是0，而负数不断向右移动的最小值是1。无符号意即藐视符号位，符号位失去特权，必须像其他平常的数字位一起向右移动，高位直接补0，根本不关心是正数还是负数。</p>
+<span id="more"></span>
+<p>先上代码看看：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> -<span class="number">32</span>, num1 = -<span class="number">64</span>, num2 = <span class="number">32</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">a</span> <span class="operator">=</span> num &gt;&gt; <span class="number">33</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">b</span> <span class="operator">=</span> num &gt;&gt;&gt; <span class="number">31</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> num1 &gt;&gt;&gt; <span class="number">64</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">d</span> <span class="operator">=</span> num1 &gt;&gt;&gt; <span class="number">63</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">h</span> <span class="operator">=</span> num1 &gt;&gt;&gt; <span class="number">65</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">e</span> <span class="operator">=</span> num2 &gt;&gt; <span class="number">33</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">f</span> <span class="operator">=</span> num2 &gt;&gt;&gt; <span class="number">31</span>;</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;-32 &gt;&gt; 33:&quot;</span> + a);</span><br><span class="line">        System.out.println(<span class="string">&quot;-32 &gt;&gt;&gt; 31:&quot;</span> + b);</span><br><span class="line">        System.out.println(<span class="string">&quot;-64 &gt;&gt;&gt; 64:&quot;</span> + c);</span><br><span class="line">        System.out.println(<span class="string">&quot;-64 &gt;&gt;&gt; 63:&quot;</span> + d);</span><br><span class="line">        System.out.println(<span class="string">&quot;-64 &gt;&gt;&gt; 65:&quot;</span> + h);</span><br><span class="line">        System.out.println(<span class="string">&quot;32 &gt;&gt;&gt; 33:&quot;</span> + e);</span><br><span class="line">        System.out.println(<span class="string">&quot;32 &gt;&gt;&gt;&gt; 31:&quot;</span> + f);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>运算结果：</p>
+<p>这里我们可以重点看一下-64的无符号右移</p>
+<p>第一个问题：-64 &gt;&gt;&gt; 64的结果是-64，不是说负数不断地无符号向右移动的最小值是1吗？<br>第二个问题：-64 &gt;&gt;&gt; 63的结果是1，按照上面的说法似乎没有疑问，但是为什么呢？？？<br>第三个问题：-64 &gt;&gt;&gt; 65的结果为什么那么大？</p>
+<p>在实际编程中，位移运算仅作用于整型（32位）和长整型（64位）数上，假如在整型数上移动的位数是字长（同一时间处理二进制的位数）的整数倍，无论是否带符号以及移动方向，均为本身（这里解决了第一个问题）。</p>
+<p>因为移动的位数是一个mod64的结果，即：对一个64位数进行无符号右移操作时，实际的位移为 位移值%64 也就是 &gt;&gt;&gt;64 &#x3D; &gt;&gt;&gt;0，那么，一个64位数一次最大无符号右移值为63位，由于负数的第一位为-1，则-1XXX(63位X)&gt;&gt;&gt;63 &#x3D; 000（63个0）1。(这里解决了第二个问题)</p>
+<p>而对于32位的数再说，无符号右移位数为 位移值%32 ，像short这种类型的数，在做位移之前，会先转为int类型，然后再进行转换。</p>
+<p>那么，第三个问题的答案自行思考吧</p>
+<p>这里还是举例补充说明一下吧，毕竟我也理解了很久</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">System.out.println(<span class="string">&quot;-16无符号右移2位:&quot;</span>+(-<span class="number">16</span>&gt;&gt;&gt;<span class="number">2</span>));</span><br><span class="line"><span class="comment">//-16无符号右移2位:1073741820</span></span><br></pre></td></tr></table></figure>
+
+<p>这个是为什么？</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">首先一定要知道 无符号右移运算符&gt;&gt;&gt; 只是对<span class="number">32</span>位和<span class="number">64</span>位的值有意义，这个在前面也说了</span><br><span class="line"></span><br><span class="line">例如： -<span class="number">16</span>的无符号右移<span class="number">2</span>位应该这样算才对----------------------取<span class="number">32</span>位长度的<span class="number">16</span>的二进制补码加<span class="number">1</span></span><br><span class="line"><span class="number">16</span>二进制：<span class="number">00000000</span> <span class="number">00000000</span> <span class="number">00000000</span> <span class="number">00010000</span></span><br><span class="line"></span><br><span class="line">补码+<span class="number">1</span>后：<span class="number">11111111</span> <span class="number">11111111</span> <span class="number">11111111</span> <span class="number">11110000</span></span><br><span class="line"></span><br><span class="line">右移两位高位补零：<span class="number">00111111</span> <span class="number">11111111</span> <span class="number">11111111</span> <span class="number">11111100</span></span><br><span class="line">这个二进制对应的值就是<span class="number">1073741820</span></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/java/" rel="tag"># java</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/09/15/Java%E5%9F%BA%E7%A1%80/" rel="prev" title="Java基础">
+                  <i class="fa fa-chevron-left"></i> Java基础
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/06/02/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E2%80%94%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E6%A6%82%E8%BF%B0/" rel="next" title="设计模式（一）——设计模式概述">
+                  设计模式（一）——设计模式概述 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">noarsark</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
